@@ -49,6 +49,7 @@ Documentation is at [http://godoc.org/github.com/iand/gedcom](http://godoc.org/g
 
 
 ## Contributors
+* [Doug Henderson](http://github.com/djhenderson)
 
 
 ## Contributing
