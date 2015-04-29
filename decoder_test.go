@@ -89,11 +89,11 @@ func TestIndividual(t *testing.T) {
 	i1 := g.Individual[0]
 
 	if i1.Xref != "PERSON1" {
-		t.Errorf(`Individual 0 xref was "%s", expected @PERSON1@`, i1.Xref)
+		t.Errorf(`Individual 0 xref was "%q", expected @PERSON1@`, i1.Xref)
 	}
 
 	if i1.Sex != "M" {
-		t.Errorf(`Individual 0 sex "%s" names, expected "M"`, i1.Sex)
+		t.Errorf(`Individual 0 sex "%q" names, expected "M"`, i1.Sex)
 	}
 
 	if len(i1.Name) != 2 {
@@ -111,10 +111,12 @@ func TestIndividual(t *testing.T) {
 
 				Page: "42",
 				Quay: "0",
-				Data: DataRecord{
-					Date: "BEF 1 JAN 1900",
-					Text: []string{
-						"a sample text\nSample text continued here. The word TEST should not be broken!",
+				Data: []*DataRecord{
+					&DataRecord{
+						Data: "BEF 1 JAN 1900",
+						Text: []string{
+							"a sample text\nSample text continued here. The word TEST should not be broken!",
+						},
 					},
 				},
 				Note: []*NoteRecord{
@@ -132,7 +134,7 @@ func TestIndividual(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(i1.Name[0], name1) {
-		t.Errorf("Individual 0 name 0 was: %s", spew.Sdump(i1.Name[0]))
+		t.Errorf("Individual 0 name 0 was: %q", spew.Sdump(i1.Name[0]))
 	}
 
 	if len(i1.Event) != 24 {
@@ -141,7 +143,7 @@ func TestIndividual(t *testing.T) {
 	event1 := &EventRecord{
 		Tag:  "BIRT",
 		Date: "31 DEC 1997",
-		Place: PlaceRecord{
+		Place: &PlaceRecord{
 			Name: "The place",
 		},
 		Citation: []*CitationRecord{
@@ -152,10 +154,12 @@ func TestIndividual(t *testing.T) {
 				},
 				Page: "42",
 				Quay: "2",
-				Data: DataRecord{
-					Date: "31 DEC 1900",
-					Text: []string{
-						"a sample text\nSample text continued here. The word TEST should not be broken!",
+				Data: []*DataRecord{
+					&DataRecord{
+						Data: "31 DEC 1900",
+						Text: []string{
+							"a sample text\nSample text continued here. The word TEST should not be broken!",
+						},
 					},
 				},
 				Note: []*NoteRecord{
@@ -173,7 +177,7 @@ func TestIndividual(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(i1.Event[0], event1) {
-		t.Errorf("Individual 0 event 0 was: %s", spew.Sdump(i1.Event[0]))
+		t.Errorf("Individual 0 event 0 was: %q", spew.Sdump(i1.Event[0]))
 	}
 
 	if len(i1.Attribute) != 15 {
@@ -183,7 +187,7 @@ func TestIndividual(t *testing.T) {
 		Tag:   "CAST",
 		Value: "Cast name",
 		Date:  "31 DEC 1997",
-		Place: PlaceRecord{
+		Place: &PlaceRecord{
 			Name: "The place",
 		},
 		Citation: []*CitationRecord{
@@ -194,10 +198,12 @@ func TestIndividual(t *testing.T) {
 				},
 				Page: "42",
 				Quay: "3",
-				Data: DataRecord{
-					Date: "31 DEC 1900",
-					Text: []string{
-						"a sample text\nSample text continued here. The word TEST should not be broken!",
+				Data: []*DataRecord{
+					&DataRecord{
+						Data: "31 DEC 1900",
+						Text: []string{
+							"a sample text\nSample text continued here. The word TEST should not be broken!",
+						},
 					},
 				},
 				Note: []*NoteRecord{
@@ -215,7 +221,8 @@ func TestIndividual(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(i1.Attribute[0], att1) {
-		t.Errorf("Individual 0 attribute 0 was: %s\nExpected: %s", spew.Sdump(i1.Attribute[0]), spew.Sdump(att1))
+		t.Errorf("Individual 0 attribute 0 was: %q\nExpected: %q",
+			spew.Sdump(i1.Attribute[0]), spew.Sdump(att1))
 	}
 
 	if len(i1.Parents) != 2 {

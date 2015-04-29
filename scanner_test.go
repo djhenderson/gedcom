@@ -26,6 +26,18 @@ var examples = []example{
 	{[]byte("1 SEX F \r"), 1, `SEX`, `F `, ""},
 	{[]byte("0 HEAD\r"), 0, `HEAD`, ``, ""},
 	{[]byte("0 @OTHER@ SUBM\n"), 0, `SUBM`, ``, "OTHER"},
+	// leading BOM
+	//{[]byte("\xef\xbb\xbf0 HEAD\r"), 0, `HEAD`, ``, ""},
+	// email address with escaped @
+	//{[]byte("1 EMAIL toaddress@@example.com"), 1, `EMAIL`, `toaddress@@example.com`, ""},
+	// email address with naked @
+	//{[]byte("1 EMAIL toaddress@example.com"), 1, `EMAIL`, `toaddress@example.com`, ""},
+	// value includes text and xref
+	//{[]byte("    2 SOUR Book, Simple @S10@"), 2, `SOUR`, `Book, Simple`, "S10"},
+	// value includes text and xref
+	//{[]byte("  1 ROLE CHIL @I1@"), 1, `ROLE`, `CHIL`, "I1"},
+	// value includes non-ASCII character
+	//{[]byte("1 NAME Æthelreda //"), 1, `NAME`, `Æthelreda`, ""},
 }
 
 func TestNextTagFound(t *testing.T) {
