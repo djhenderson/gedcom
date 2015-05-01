@@ -2,6 +2,7 @@
 This is free and unencumbered software released into the public domain. For more
 information, see <http://unlicense.org/> or the accompanying UNLICENSE file.
 */
+
 package gedcom
 
 import (
@@ -109,8 +110,8 @@ func TestIndividual(t *testing.T) {
 					Title: "",
 				},
 
-				Page: "42",
-				Quay: "0",
+				Page:    "42",
+				Quality: "0",
 				Data: []*DataRecord{
 					&DataRecord{
 						Data: "BEF 1 JAN 1900",
@@ -137,12 +138,15 @@ func TestIndividual(t *testing.T) {
 		t.Errorf("Individual 0 name 0 was: %q", spew.Sdump(i1.Name[0]))
 	}
 
-	if len(i1.Event) != 24 {
-		t.Fatalf(`Individual 0 had %d events, expected 24`, len(i1.Event))
+	if len(i1.Event) != 31 {
+		t.Fatalf(`Individual 0 had %d events, expected 31`, len(i1.Event))
 	}
 	event1 := &EventRecord{
-		Tag:  "BIRT",
-		Date: "31 DEC 1997",
+		Level: 1,
+		Tag:   "BIRT",
+		Date: &DateRecord{
+			Date: "31 DEC 1997",
+		},
 		Place: &PlaceRecord{
 			Name: "The place",
 		},
@@ -152,8 +156,8 @@ func TestIndividual(t *testing.T) {
 					Xref:  "SOURCE1",
 					Title: "",
 				},
-				Page: "42",
-				Quay: "2",
+				Page:    "42",
+				Quality: "2",
 				Data: []*DataRecord{
 					&DataRecord{
 						Data: "31 DEC 1900",
@@ -180,13 +184,16 @@ func TestIndividual(t *testing.T) {
 		t.Errorf("Individual 0 event 0 was: %q", spew.Sdump(i1.Event[0]))
 	}
 
-	if len(i1.Attribute) != 15 {
-		t.Fatalf(`Individual 0 had %d attributes, expected 15`, len(i1.Attribute))
+	if len(i1.Attribute) != 7 {
+		t.Fatalf(`Individual 0 had %d attributes, expected 7`, len(i1.Attribute))
 	}
 	att1 := &EventRecord{
+		Level: 1,
 		Tag:   "CAST",
 		Value: "Cast name",
-		Date:  "31 DEC 1997",
+		Date: &DateRecord{
+			Date: "31 DEC 1997",
+		},
 		Place: &PlaceRecord{
 			Name: "The place",
 		},
@@ -196,8 +203,8 @@ func TestIndividual(t *testing.T) {
 					Xref:  "SOURCE1",
 					Title: "",
 				},
-				Page: "42",
-				Quay: "3",
+				Page:    "42",
+				Quality: "3",
 				Data: []*DataRecord{
 					&DataRecord{
 						Data: "31 DEC 1900",
