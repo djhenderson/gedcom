@@ -10,6 +10,7 @@ type AddressRecord struct {
 	Full       string // ..ADDR value
 	Line1      string // ..ADDR.ADR1
 	Line2      string // ..ADDR.ADR2
+	Line3      string // ..ADDR.ADR3
 	City       string // ..ADDR.CITY
 	State      string // ..ADDR.STAE
 	PostalCode string // ..ADDR.POST
@@ -30,6 +31,7 @@ type BusinessRecord struct {
 	BusinessName string         // ..HEAD.SOUR.CORP value
 	Address      *AddressRecord // ..HEAD.SOUR.CORP.ADDR
 	Phone        []string       // ..HEAD.SOUR.CORP.PHON
+	WebSite      string         // ..HEAD.SOUR.CORP.WWW
 }
 
 type CallNumberRecord struct {
@@ -66,6 +68,7 @@ type CitationRecord struct {
 	Value         string        // value of ..SOUR excluding xref
 	Source        *SourceRecord //
 	Page          string        // ..SOUR.PAGE
+	Reference     string        // ..SOUR.REF
 	Data          DataRecords   // ..SOUR.DATA
 	Text          []string      // ..SOUR.TEXT
 	Quality       string        // ..SOUR.QUAY
@@ -114,33 +117,34 @@ type EventDefinitionRecords []*EventDefinitionRecord
 
 // EventRecord represents a GEDCOM event record.
 type EventRecord struct {
-	Level      int             // ..EVEN level; 0 or higher
-	Xref       string          // xref_id of level 0 ..EVEN
-	Tag        string          // Event tag EVEN or BIRT or ...
-	Value      string          // Event value
-	Type       string          // ..EVEN.TYPE
-	Name       string          // ..EVEN.NAME
-	Date       *DateRecord     // ..EVEN.DATE
-	Place      *PlaceRecord    // ..EVEN.PLAC
-	Role       RoleRecords     // ..EVEN.ROLE
-	Address    *AddressRecord  // ..EVEN.ADDR
-	Parents    FamilyLinks     // ..EVEN.FAMC
-	Husband    *IndividualLink // ..EVEN.HUSB
-	Wife       *IndividualLink // ..EVEN.WIFE
-	Spouse     *IndividualLink // ..EVEN.SPOU
-	Age        string          // ..EVEN.AGE
-	Agency     string          // ..EVEN.AGNC
-	Cause      string          // ..EVEN.CAUS
-	Temple     string          // ..EVEN.TEMP
-	Quality    string          // ..EVEN.QUAY
-	UID        []string        // ..EVEN._UID
-	RIN        string          // ..EVEN.RIN
-	Email      string          // .. EVEN.EMAIL
-	Media      MediaRecords    // ..EVEN.OBJE
-	Citation   CitationRecords // ..EVEN.SOUR
-	Note       NoteRecords     // ..EVEN.NOTE
-	Change     *ChangeRecord   // ..EVEN.CHAN
-	UpdateTime string          // ..EVEN._UPD
+	Level       int             // ..EVEN level; 0 or higher
+	Xref        string          // xref_id of level 0 ..EVEN
+	Tag         string          // Event tag EVEN or BIRT or ...
+	Value       string          // Event value
+	Type        string          // ..EVEN.TYPE
+	Name        string          // ..EVEN.NAME
+	Primary_    string          // ..EVEN._PRIM
+	Date        *DateRecord     // ..EVEN.DATE
+	Place       *PlaceRecord    // ..EVEN.PLAC
+	Role        RoleRecords     // ..EVEN.ROLE
+	Address     *AddressRecord  // ..EVEN.ADDR
+	Parents     FamilyLinks     // ..EVEN.FAMC
+	Husband     *IndividualLink // ..EVEN.HUSB
+	Wife        *IndividualLink // ..EVEN.WIFE
+	Spouse      *IndividualLink // ..EVEN.SPOU
+	Age         string          // ..EVEN.AGE
+	Agency      string          // ..EVEN.AGNC
+	Cause       string          // ..EVEN.CAUS
+	Temple      string          // ..EVEN.TEMP
+	Quality     string          // ..EVEN.QUAY
+	UID_        []string        // ..EVEN._UID
+	RIN         string          // ..EVEN.RIN
+	Email       string          // .. EVEN.EMAIL
+	Media       MediaRecords    // ..EVEN.OBJE
+	Citation    CitationRecords // ..EVEN.SOUR
+	Note        NoteRecords     // ..EVEN.NOTE
+	Change      *ChangeRecord   // ..EVEN.CHAN
+	UpdateTime_ string          // ..EVEN._UPD
 }
 
 // EventRecords represents a slice of event records.
@@ -154,7 +158,7 @@ type FamilyLink struct {
 	Family   *FamilyRecord // target of INDI.FAMC or INDI.FAMS or EVEN.FAMC
 	Pedigree string        // INDI.FAMC.PEDI or ...
 	Adopted  string        // INDI.FAMC.ADOP or ...
-	Primary  string        // INDI.FAMC.ADOP or ...
+	Primary_ string        // INDI.FAMC._PRIMARY or ...
 	Note     NoteRecords   // INDI.FAMC.NOTE or ..
 }
 
@@ -170,13 +174,13 @@ type FamilyRecord struct {
 	NumChildren int             // FAM.NCHI
 	Child       IndividualLinks // FAM.CHIL
 	Event       EventRecords    // FAM.MARR, FAM.EVEN
-	UID         []string        // FAM._UID
+	UID_        []string        // FAM._UID
 	RIN         string          // FAM.RIN
 	Media       MediaLinks      // FAM.OBJE
 	Citation    CitationRecords // FAM.SOUR
 	Note        NoteRecords     // FAM.NOTE
 	Change      *ChangeRecord   // FAM.CHAN
-	UpdateTime  string          // FAM._UPD
+	UpdateTime_ string          // FAM._UPD
 }
 
 // FamilyRecords represents a slice of family records.
@@ -206,6 +210,7 @@ type HeaderRecord struct {
 	CharacterSet *CharacterSetRecord // HEAD.CHAR
 	Language     string              // HEAD.LANG
 	Copyright    string              // HEAD.COPR
+	Root_        *IndividualLink     // HEAD._ROOT
 	Note         NoteRecords         // HEAD.NOTE
 	Submitter    []*SubmitterLink    // HEAD.SUBM
 	Submission   []*SubmissionLink   // HEAD.SUBN
@@ -250,13 +255,13 @@ type IndividualRecord struct {
 	RefNumber       string                 // INDI.RFN
 	ReferenceNumber *ReferenceNumberRecord // INDI.REFN
 	RIN             string                 // INDI.RIN
-	UID             []string               // INDI._UID
+	UID_            []string               // INDI._UID
 	Email           string                 // INDI.EMAIL
 	WebSite         string                 // INDI.WWW
 	Citation        CitationRecords        // INDI.SOUR
 	Note            NoteRecords            // INDI.NOTE
 	Change          *ChangeRecord          // INDI.CHAN
-	UpdateTime      string                 // INDI.UPD
+	UpdateTime_     string                 // INDI._UPD
 	Alias           string                 // INDI.ALIA
 	Father          *IndividualLink        // INDI.FATH
 	Mother          *IndividualLink        // INDI.MOTH
@@ -282,32 +287,40 @@ type MediaLink struct {
 type MediaLinks []*MediaLink
 
 type MediaRecord struct {
-	Level    int         // ..OBJE level; always 0
-	Xref     string      // xref_id of 0 level OBJE
-	Format   string      // OBJE.FORM
-	FileName string      // OBJE.FILE
-	Title    string      // OBJE.TITL
-	Date     string      // OBJE.DATE
-	Author   string      // OBJE.AUTH
-	Text     string      // OBJE.TEXT
-	Note     NoteRecords // OBJE.NOTE
+	Level     int         // ..OBJE level; always 0
+	Xref      string      // xref_id of 0 level OBJE
+	Format    string      // OBJE.FORM
+	URL_      string      // OBJE._URL
+	FileName  string      // OBJE.FILE
+	Title     string      // OBJE.TITL
+	Date      string      // OBJE.DATE
+	Author    string      // OBJE.AUTH
+	Text      string      // OBJE.TEXT
+	Note      NoteRecords // OBJE.NOTE
+	Date_     string      // OBJE._DATE
+	AstId_    string      // OBJE._ASTID
+	AstType_  string      // OBJE._ASTTYP
+	AstDesc_  string      // OBJE._ASTDESC
+	AstPerm_  string      // OBJE._ASTPERM
+	AstUpPid_ string      // OBJE._ASTUPPID
 }
 
 type MediaRecords []*MediaRecord
 
 type NameRecord struct {
-	Level             int             // ..NAME level
-	Name              string          // ..NAME value
-	Prefix            string          // ..NAME.NPFX
-	GivenName         string          // ..NAME.GIVN
-	MiddleName        string          // ..NAME._MIDN
-	Surname           string          // ..NAME.SURN
-	Suffix            string          // ..NAME.NSFX
-	PreferedGivenName string          // ..NAME._PGVN
-	AKA               []string        // ..NAME._AKA
-	Nickname          []string        // ..NAME.NICK
-	Citation          CitationRecords // ..NAME.SOUR
-	Note              NoteRecords     // ..NAME.NOTE
+	Level              int             // ..NAME level
+	Name               string          // ..NAME value
+	Prefix             string          // ..NAME.NPFX
+	GivenName          string          // ..NAME.GIVN
+	MiddleName_        string          // ..NAME._MIDN
+	Surname            string          // ..NAME.SURN
+	Suffix             string          // ..NAME.NSFX
+	PreferedGivenName_ string          // ..NAME._PGVN
+	Primary_           string          // ..NAME._PRIM
+	AKA_               []string        // ..NAME._AKA
+	Nickname           []string        // ..NAME.NICK
+	Citation           CitationRecords // ..NAME.SOUR
+	Note               NoteRecords     // ..NAME.NOTE
 }
 
 type NameRecords []*NameRecord
@@ -370,6 +383,8 @@ type RepositoryRecord struct {
 	Xref    string         // xref_id of 0 level REPO
 	Name    string         // REPO.NAME
 	Address *AddressRecord // REPO.ADDR
+	WebSite string         // REPO.WWW
+	Change  *ChangeRecord  // REPO.CHAN
 }
 
 type RepositoryRecords []*RepositoryRecord
@@ -384,21 +399,21 @@ type RoleRecord struct {
 type RoleRecords []*RoleRecord
 
 type RootRecord struct {
-	Level           int                    // root level
-	Header          *HeaderRecord          // HEAD
-	Submitter       []*SubmitterRecord     // SUBM
-	Submission      []*SubmissionRecord    // SUBN
-	Place           PlaceRecords           // PLAC
-	Event           EventRecords           // EVEN
-	Individual      IndividualRecords      // INDI
-	Family          FamilyRecords          // FAM
-	Repository      RepositoryRecords      // REPO
-	Source          SourceRecords          // SOUR
-	Media           MediaRecords           // OBJE
-	Note            NoteRecords            // NOTE
-	EventDefinition EventDefinitionRecords // _EVENT_DEFN
-	ChildStatus     ChildStatusRecords     // CSTA
-	Trailer         *TrailerRecord         // TRLR
+	Level            int                    // root level
+	Header           *HeaderRecord          // HEAD
+	Submitter        []*SubmitterRecord     // SUBM
+	Submission       []*SubmissionRecord    // SUBN
+	Place            PlaceRecords           // PLAC
+	Event            EventRecords           // EVEN
+	Individual       IndividualRecords      // INDI
+	Family           FamilyRecords          // FAM
+	Repository       RepositoryRecords      // REPO
+	Source           SourceRecords          // SOUR
+	Media            MediaRecords           // OBJE
+	Note             NoteRecords            // NOTE
+	EventDefinition_ EventDefinitionRecords // _EVENT_DEFN
+	ChildStatus      ChildStatusRecords     // CSTA
+	Trailer          *TrailerRecord         // TRLR
 }
 
 type SchemaRecord struct {
@@ -414,24 +429,24 @@ type ShortTitleRecord struct {
 // SourceRecord
 // Note: a CitationRecord is a SourceLink
 type SourceRecord struct {
-	Level         int                 // ..SOUR level; always 0
-	Xref          string              // xref_id of 0 level SOUR
-	Name          string              // ..SOUR.NAME
-	Title         string              // ..SOUR.TITL
-	Author        string              // ..SOUR.AUTH
-	Abbreviation  string              // ..SOUR.ABBR
-	Publication   string              // ..SOUR.PUBL
-	Parenthesized string              // ..SOUR._PAREN (PAF5)
-	Text          []string            // ..SOUR.TEXT
-	Data          *DataRecord         // ..SOUR.DATA
-	Footnote      *FootnoteRecord     // ..SOUR.FOOT
-	Bibliography  *BibliographyRecord // ..SOUR.BIBL
-	Repository    *RepositoryLink     // ..SOUR.REPO
-	ShortAuthor   string              // ..SOUR.SHAU
-	ShortTitle    *ShortTitleRecord   // ..SOUR.SHTI
-	Media         MediaLinks          // ..SOUR.OBJE
-	Note          NoteRecords         // ..SOUR.NOTE
-	Change        *ChangeRecord       // ..SOUR.CHAN
+	Level          int                 // ..SOUR level; always 0
+	Xref           string              // xref_id of 0 level SOUR
+	Name           string              // ..SOUR.NAME
+	Title          string              // ..SOUR.TITL
+	Author         string              // ..SOUR.AUTH
+	Abbreviation   string              // ..SOUR.ABBR
+	Publication    string              // ..SOUR.PUBL
+	Parenthesized_ string              // ..SOUR._PAREN (PAF5)
+	Text           []string            // ..SOUR.TEXT
+	Data           *DataRecord         // ..SOUR.DATA
+	Footnote       *FootnoteRecord     // ..SOUR.FOOT
+	Bibliography   *BibliographyRecord // ..SOUR.BIBL
+	Repository     *RepositoryLink     // ..SOUR.REPO
+	ShortAuthor    string              // ..SOUR.SHAU
+	ShortTitle     *ShortTitleRecord   // ..SOUR.SHTI
+	Media          MediaLinks          // ..SOUR.OBJE
+	Note           NoteRecords         // ..SOUR.NOTE
+	Change         *ChangeRecord       // ..SOUR.CHAN
 }
 
 type SourceRecords []*SourceRecord

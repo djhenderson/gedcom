@@ -58,6 +58,11 @@ func (r *AddressRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.Line3 != "" {
+		s = fmt.Sprintf("%s%d ADR3 %s", indent(r.Level+1), r.Level+1, r.Line3)
+		ss = append(ss, s)
+	}
+
 	if r.City != "" {
 		s = fmt.Sprintf("%s%d CITY %s", indent(r.Level+1), r.Level+1, r.City)
 		ss = append(ss, s)
@@ -133,6 +138,11 @@ func (r *BusinessRecord) String() string {
 			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
 			ss = append(ss, s)
 		}
+	}
+
+	if r.WebSite != "" {
+		s = fmt.Sprintf("%s%d WWW %s", indent(r.Level), r.Level, r.WebSite)
+		ss = append(ss, s)
 	}
 
 	return strings.Join(ss, "\n")
@@ -236,6 +246,11 @@ func (r *CitationRecord) String() string {
 
 	if r.Page != "" {
 		s = fmt.Sprintf("%s%d PAGE %s", indent(r.Level+1), r.Level+1, r.Page)
+		ss = append(ss, s)
+	}
+
+	if r.Reference != "" {
+		s = fmt.Sprintf("%s%d REF %s", indent(r.Level+1), r.Level+1, r.Reference)
 		ss = append(ss, s)
 	}
 
@@ -441,6 +456,16 @@ func (r *EventRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.Name != "" {
+		s = fmt.Sprintf("%s%d NAME %s", indent(r.Level+1), r.Level+1, r.Name)
+		ss = append(ss, s)
+	}
+
+	if r.Primary_ != "" {
+		s = fmt.Sprintf("%s%d _PRIM %s", indent(r.Level+1), r.Level+1, r.Primary_)
+		ss = append(ss, s)
+	}
+
 	if r.Date != nil {
 		s = r.Date.String()
 		ss = append(ss, s)
@@ -524,6 +549,18 @@ func (r *EventRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.UID_ != nil {
+		for _, uid := range r.UID_ {
+			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.UpdateTime_ != "" {
+		s = fmt.Sprintf("%s%d _UPD %s", indent(r.Level+1), r.Level+1, r.UpdateTime_)
+		ss = append(ss, s)
+	}
+
 	return strings.Join(ss, "\n")
 }
 
@@ -556,6 +593,11 @@ func (r *FamilyLink) String() string {
 
 	if r.Adopted != "" {
 		s = fmt.Sprintf("%s%d ADOP %s", indent(r.Level+1), r.Level+1, r.Adopted)
+		ss = append(ss, s)
+	}
+
+	if r.Primary_ != "" {
+		s = fmt.Sprintf("%s%d _PRIMARY %s", indent(r.Level+1), r.Level+1, r.Primary_)
 		ss = append(ss, s)
 	}
 
@@ -630,6 +672,18 @@ func (r *FamilyRecord) String() string {
 
 	if r.Change != nil {
 		s = r.Change.String()
+		ss = append(ss, s)
+	}
+
+	if r.UID_ != nil {
+		for _, uid := range r.UID_ {
+			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.UpdateTime_ != "" {
+		s = fmt.Sprintf("%s%d _UPD %s", indent(r.Level+1), r.Level+1, r.UpdateTime_)
 		ss = append(ss, s)
 	}
 
@@ -729,6 +783,11 @@ func (r *HeaderRecord) String() string {
 
 	if r.Language != "" {
 		s = fmt.Sprintf("%s%d LANG %s", indent(r.Level+1), r.Level+1, r.Language)
+		ss = append(ss, s)
+	}
+
+	if r.Root_ != nil {
+		s = r.Root_.String()
 		ss = append(ss, s)
 	}
 
@@ -918,8 +977,8 @@ func (r *IndividualRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.UID != nil {
-		for _, uid := range r.UID {
+	if r.UID_ != nil {
+		for _, uid := range r.UID_ {
 			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
 			ss = append(ss, s)
 		}
@@ -1078,6 +1137,11 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.URL_ != "" {
+		s = fmt.Sprintf("%s%d _URL %s", indent(r.Level+1), r.Level+1, r.URL_)
+		ss = append(ss, s)
+	}
+
 	if r.FileName != "" {
 		s = fmt.Sprintf("%s%d FILE %s", indent(r.Level+1), r.Level+1, r.FileName)
 		ss = append(ss, s)
@@ -1105,6 +1169,36 @@ func (r *MediaRecord) String() string {
 
 	if r.Note != nil {
 		s = r.Note.String()
+		ss = append(ss, s)
+	}
+
+	if r.Date_ != "" {
+		s = fmt.Sprintf("%s%d _DATE %s", indent(r.Level+1), r.Level+1, r.Date_)
+		ss = append(ss, s)
+	}
+
+	if r.AstId_ != "" {
+		s = fmt.Sprintf("%s%d _ASTID %s", indent(r.Level+1), r.Level+1, r.AstId_)
+		ss = append(ss, s)
+	}
+
+	if r.AstType_ != "" {
+		s = fmt.Sprintf("%s%d _ASTTYP %s", indent(r.Level+1), r.Level+1, r.AstType_)
+		ss = append(ss, s)
+	}
+
+	if r.AstDesc_ != "" {
+		s = fmt.Sprintf("%s%d _ASTDESC %s", indent(r.Level+1), r.Level+1, r.AstDesc_)
+		ss = append(ss, s)
+	}
+
+	if r.AstPerm_ != "" {
+		s = fmt.Sprintf("%s%d _ASTPERM %s", indent(r.Level+1), r.Level+1, r.AstPerm_)
+		ss = append(ss, s)
+	}
+
+	if r.AstUpPid_ != "" {
+		s = fmt.Sprintf("%s%d _ASTUPPID %s", indent(r.Level+1), r.Level+1, r.AstUpPid_)
 		ss = append(ss, s)
 	}
 
@@ -1143,8 +1237,8 @@ func (r *NameRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.MiddleName != "" {
-		s = fmt.Sprintf("%s%d _MIDN %s", indent(r.Level+1), r.Level+1, r.MiddleName)
+	if r.MiddleName_ != "" {
+		s = fmt.Sprintf("%s%d _MIDN %s", indent(r.Level+1), r.Level+1, r.MiddleName_)
 		ss = append(ss, s)
 	}
 
@@ -1158,13 +1252,18 @@ func (r *NameRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.PreferedGivenName != "" {
-		s = fmt.Sprintf("%s%d PGVN %s", indent(r.Level+1), r.Level+1, r.PreferedGivenName)
+	if r.PreferedGivenName_ != "" {
+		s = fmt.Sprintf("%s%d _PGVN %s", indent(r.Level+1), r.Level+1, r.PreferedGivenName_)
 		ss = append(ss, s)
 	}
 
-	if r.AKA != nil {
-		for _, aka := range r.AKA {
+	if r.Primary_ != "" {
+		s = fmt.Sprintf("%s%d _PRIM %s", indent(r.Level+1), r.Level+1, r.Primary_)
+		ss = append(ss, s)
+	}
+
+	if r.AKA_ != nil {
+		for _, aka := range r.AKA_ {
 			s = fmt.Sprintf("%s%d _AKA %s", indent(r.Level+1), r.Level+1, aka)
 			ss = append(ss, s)
 		}
@@ -1352,11 +1451,23 @@ func (r *RepositoryRecord) String() string {
 	s = fmt.Sprintf("%s%d @%s@ REPO", indent(r.Level), r.Level, r.Xref)
 	ss = append(ss, s)
 
-	s = fmt.Sprintf("%s%d NAME %s", indent(r.Level+1), r.Level+1, r.Name)
-	ss = append(ss, s)
+	if r.Name != "" {
+		s = fmt.Sprintf("%s%d NAME %s", indent(r.Level+1), r.Level+1, r.Name)
+		ss = append(ss, s)
+	}
 
 	if r.Address != nil {
 		s = r.Address.String()
+		ss = append(ss, s)
+	}
+
+	if r.WebSite != "" {
+		s = fmt.Sprintf("%s%d WWW %s", indent(r.Level+1), r.Level+1, r.WebSite)
+		ss = append(ss, s)
+	}
+
+	if r.Change != nil {
+		s = r.Change.String()
 		ss = append(ss, s)
 	}
 
@@ -1402,8 +1513,10 @@ func (r *RootRecord) String() string {
 	var ss []string
 	var s string
 
-	s = fmt.Sprintf("%s", r.Header.String())
-	ss = append(ss, s)
+	if r.Header != nil {
+		s = r.Header.String()
+		ss = append(ss, s)
+	}
 
 	if r.Submission != nil {
 		for _, subn := range r.Submission {
@@ -1433,14 +1546,18 @@ func (r *RootRecord) String() string {
 		}
 	}
 
-	for _, x := range r.Individual {
-		s = x.String()
-		ss = append(ss, s)
+	if r.Individual != nil {
+		for _, x := range r.Individual {
+			s = x.String()
+			ss = append(ss, s)
+		}
 	}
 
-	for _, x := range r.Family {
-		s = x.String()
-		ss = append(ss, s)
+	if r.Family != nil {
+		for _, x := range r.Family {
+			s = x.String()
+			ss = append(ss, s)
+		}
 	}
 
 	if r.Repository != nil {
@@ -1478,8 +1595,10 @@ func (r *RootRecord) String() string {
 		}
 	}
 
-	s = r.Trailer.String()
-	ss = append(ss, s)
+	if r.Trailer != nil {
+		s = r.Trailer.String()
+		ss = append(ss, s)
+	}
 
 	return strings.Join(ss, "\n")
 }
@@ -1550,8 +1669,8 @@ func (r *SourceRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Parenthesized != "" {
-		s = fmt.Sprintf("%s%d _PAREN %s", indent(r.Level+1), r.Level+1, r.Parenthesized)
+	if r.Parenthesized_ != "" {
+		s = fmt.Sprintf("%s%d _PAREN %s", indent(r.Level+1), r.Level+1, r.Parenthesized_)
 		ss = append(ss, s)
 	}
 

@@ -30,19 +30,19 @@ func NewDecoder(r io.Reader) *Decoder {
 func (d *Decoder) Decode() (*RootRecord, error) {
 
 	g := &RootRecord{
-		Level:           -1,
-		Place:           make(PlaceRecords, 0),
-		Event:           make(EventRecords, 0),
-		Individual:      make(IndividualRecords, 0),
-		Family:          make(FamilyRecords, 0),
-		Repository:      make(RepositoryRecords, 0),
-		Source:          make(SourceRecords, 0),
-		Media:           make(MediaRecords, 0),
-		Note:            make(NoteRecords, 0),
-		EventDefinition: make(EventDefinitionRecords, 0),
-		ChildStatus:     make(ChildStatusRecords, 0),
-		Submission:      make([]*SubmissionRecord, 0),
-		Submitter:       make([]*SubmitterRecord, 0),
+		Level:            -1,
+		Place:            make(PlaceRecords, 0),
+		Event:            make(EventRecords, 0),
+		Individual:       make(IndividualRecords, 0),
+		Family:           make(FamilyRecords, 0),
+		Repository:       make(RepositoryRecords, 0),
+		Source:           make(SourceRecords, 0),
+		Media:            make(MediaRecords, 0),
+		Note:             make(NoteRecords, 0),
+		EventDefinition_: make(EventDefinitionRecords, 0),
+		ChildStatus:      make(ChildStatusRecords, 0),
+		Submission:       make([]*SubmissionRecord, 0),
+		Submitter:        make([]*SubmitterRecord, 0),
 	}
 
 	d.refs = make(map[string]interface{})
@@ -345,6 +345,9 @@ func makeAddressParser(d *Decoder, a *AddressRecord, minLevel int) parser {
 		case "ADR2":
 			a.Line2 = value
 
+		case "ADR3":
+			a.Line3 = value
+
 		case "CITY":
 			a.City = value
 
@@ -401,6 +404,9 @@ func makeBusinessParser(d *Decoder, b *BusinessRecord, minLevel int) parser {
 
 		case "PHON":
 			b.Phone = append(b.Phone, value)
+
+		case "WWW":
+			b.WebSite = value
 
 		default:
 			log.Printf("unhandled Business tag: %d %s %s\n", level, tag, value)
@@ -498,6 +504,9 @@ func makeCitationParser(d *Decoder, c *CitationRecord, minLevel int) parser {
 
 		case "PAGE":
 			c.Page = value
+
+		case "REF":
+			c.Reference = value
 
 		case "QUAY":
 			c.Quality = value
@@ -643,6 +652,9 @@ func makeEventParser(d *Decoder, e *EventRecord, minLevel int) parser {
 		case "NAME":
 			e.Name = value
 
+		case "_PRIM":
+			e.Primary_ = value
+
 		case "DATE":
 			rec := &DateRecord{Level: level, Date: value}
 			e.Date = rec
@@ -701,7 +713,7 @@ func makeEventParser(d *Decoder, e *EventRecord, minLevel int) parser {
 			e.Quality = value
 
 		case "_UID":
-			e.UID = append(e.UID, value)
+			e.UID_ = append(e.UID_, value)
 
 		case "RIN":
 			e.RIN = value
@@ -726,7 +738,7 @@ func makeEventParser(d *Decoder, e *EventRecord, minLevel int) parser {
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		case "_UPD":
-			e.UpdateTime = value
+			e.UpdateTime_ = value
 
 		default:
 			log.Printf("unhandled Event tag: %d %s %s\n", level, tag, value)
@@ -750,7 +762,7 @@ func makeFamilyLinkParser(d *Decoder, f *FamilyLink, minLevel int) parser {
 			f.Adopted = value
 
 		case "_PRIMARY":
-			f.Primary = value
+			f.Primary_ = value
 
 		case "NOTE":
 			rec := &NoteRecord{Level: level, Note: value}
@@ -802,7 +814,7 @@ func makeFamilyParser(d *Decoder, f *FamilyRecord, minLevel int) parser {
 			d.pushParser(makeEventParser(d, rec, level))
 
 		case "_UID":
-			f.UID = append(f.UID, value)
+			f.UID_ = append(f.UID_, value)
 
 		case "RIN":
 			f.RIN = value
@@ -829,7 +841,7 @@ func makeFamilyParser(d *Decoder, f *FamilyRecord, minLevel int) parser {
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		case "_UPD":
-			f.UpdateTime = value
+			f.UpdateTime_ = value
 
 		default:
 			log.Printf("unhandled Family tag: %d %s %s\n", level, tag, value)
@@ -940,6 +952,11 @@ func makeHeaderParser(d *Decoder, h *HeaderRecord, minLevel int) parser {
 			rec := &SchemaRecord{Level: level}
 			h.Schema = rec
 			d.pushParser(makeSchemaParser(d, rec, level))
+
+		case "_ROOT":
+			root := d.individual(stripXref(value))
+			rec := &IndividualLink{Level: level, Tag: tag, Individual: root}
+			h.Root_ = rec
 
 		default:
 			log.Printf("unhandled Header tag: %d %s %s\n", level, tag, value)
@@ -1068,7 +1085,7 @@ func makeIndividualParser(d *Decoder, i *IndividualRecord, minLevel int) parser 
 			d.pushParser(makeReferenceNumberParser(d, rec, level))
 
 		case "_UID":
-			i.UID = append(i.UID, value)
+			i.UID_ = append(i.UID_, value)
 
 		case "RIN":
 			i.RIN = value
@@ -1106,7 +1123,7 @@ func makeIndividualParser(d *Decoder, i *IndividualRecord, minLevel int) parser 
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		case "_UPD":
-			i.UpdateTime = value
+			i.UpdateTime_ = value
 
 		case "ALIA":
 			i.Alias = value
@@ -1193,6 +1210,9 @@ func makeMediaParser(d *Decoder, n *MediaRecord, minLevel int) parser {
 		case "FORM":
 			n.Format = value
 
+		case "_URL":
+			n.URL_ = value
+
 		case "FILE":
 			n.FileName = value
 
@@ -1213,6 +1233,24 @@ func makeMediaParser(d *Decoder, n *MediaRecord, minLevel int) parser {
 			rec := &NoteRecord{Level: level, Note: value}
 			n.Note = append(n.Note, rec)
 			d.pushParser(makeNoteParser(d, rec, level))
+
+		case "_DATE":
+			n.Date_ = value
+
+		case "_ASTID":
+			n.AstId_ = value
+
+		case "_ASTTYP":
+			n.AstType_ = value
+
+		case "_ASTDESC":
+			n.AstDesc_ = value
+
+		case "_ASTPERM":
+			n.AstPerm_ = value
+
+		case "_ASTUPPID":
+			n.AstUpPid_ = value
 
 		default:
 			log.Printf("unhandled Media tag: %d %s %s\n", level, tag, value)
@@ -1236,7 +1274,7 @@ func makeNameParser(d *Decoder, n *NameRecord, minLevel int) parser {
 			n.GivenName = value
 
 		case "_MIDN":
-			n.MiddleName = value
+			n.MiddleName_ = value
 
 		case "SURN":
 			n.Surname = value
@@ -1245,10 +1283,13 @@ func makeNameParser(d *Decoder, n *NameRecord, minLevel int) parser {
 			n.Suffix = value
 
 		case "_PGVN":
-			n.PreferedGivenName = value
+			n.PreferedGivenName_ = value
+
+		case "_PRIM":
+			n.Primary_ = value
 
 		case "_AKA":
-			n.AKA = append(n.AKA, value)
+			n.AKA_ = append(n.AKA_, value)
 
 		case "NICK":
 			n.Nickname = append(n.Nickname, value)
@@ -1412,6 +1453,14 @@ func makeRepositoryParser(d *Decoder, r *RepositoryRecord, minLevel int) parser 
 			r.Address = rec
 			d.pushParser(makeAddressParser(d, rec, level))
 
+		case "WWW":
+			r.WebSite = value
+
+		case "CHAN":
+			rec := &ChangeRecord{Level: level}
+			r.Change = rec
+			d.pushParser(makeChangeParser(d, rec, level))
+
 		default:
 			log.Printf("unhandled Repository tag: %d %s %s\n", level, tag, value)
 		}
@@ -1480,13 +1529,18 @@ func makeRootParser(d *Decoder, g *RootRecord) parser {
 
 			case "_EVENT_DEFN":
 				rec := d.eventDefinition(xref)
-				g.EventDefinition = append(g.EventDefinition, rec)
+				g.EventDefinition_ = append(g.EventDefinition_, rec)
 				d.pushParser(makeEventDefinitionParser(d, rec, level))
 
 			case "NOTE":
 				rec := d.note(xref)
 				g.Note = append(g.Note, rec)
 				d.pushParser(makeNoteParser(d, rec, level))
+
+			case "OBJE":
+				rec := d.media(xref)
+				g.Media = append(g.Media, rec)
+				d.pushParser(makeMediaParser(d, rec, level))
 
 			case "CSTA":
 				rec := d.childStatus(xref)
@@ -1590,7 +1644,7 @@ func makeSourceParser(d *Decoder, s *SourceRecord, minLevel int) parser {
 			d.pushParser(makeTextParser(d, &s.Title, level))
 
 		case "_PAREN":
-			s.Parenthesized = value
+			s.Parenthesized_ = value
 
 		case "TEXT":
 			s.Text = append(s.Text, value)
