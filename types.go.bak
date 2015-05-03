@@ -5,7 +5,7 @@ information, see <http://unlicense.org/> or the accompanying UNLICENSE file.
 
 package gedcom
 
-// AddressRecord represents an address record
+// AddressRecord represents an address
 type AddressRecord struct {
 	Level      int    // ..ADDR level
 	Full       string // ..ADDR value
@@ -19,23 +19,23 @@ type AddressRecord struct {
 	Phone      string // ..ADDR.PHON
 }
 
-// AddressRecords represents a slice of address records
+// AddressRecords represents a slice of addresses
 type AddressRecords []*AddressRecord
 
-// BibliographyRecord represents a bibliography record
+// BibliographyRecord represents a bibliography
 type BibliographyRecord struct {
 	Level     int      // ..BIBL level
 	Value     string   // ..BIBL value
 	Component []string // ..BIBL.COMP
 }
 
-// BlobRecord represents a binary large object record
+// BlobRecord represents a binary large object
 type BlobRecord struct {
 	Level int    // ..BLOB level
 	Data  string // ..BLOB.CONT
 }
 
-// BusinessRecord represents a business record
+// BusinessRecord represents a business
 type BusinessRecord struct {
 	Level        int            // ..HEAD.SOUR.CORP level
 	BusinessName string         // ..HEAD.SOUR.CORP value
@@ -44,38 +44,39 @@ type BusinessRecord struct {
 	WebSite      string         // ..HEAD.SOUR.CORP.WWW
 }
 
-// CallNumberRecord represents a call number record
+// CallNumberRecord represents a call number
 type CallNumberRecord struct {
 	Level      int    // ..REPO.CALN level
 	CallNumber string // ..REPO.CALN value
 	Media      string // ..REPO.CALN.MEDI
 }
 
-// ChangeRecord represents a change record
+// ChangeRecord represents a change
 type ChangeRecord struct {
 	Level int         // ..CHAN level
 	Date  *DateRecord // ..CHAN.DATE
 	Note  NoteRecords // ..CHAN.NOTE
 }
 
-// CharacterSetRecord represents a character set record
+// CharacterSetRecord represents a character set
 type CharacterSetRecord struct {
 	Level        int    // ..CHAR level
 	CharacterSet string // ..CHAR value
 	Version      string // ..CHAR.VERS
 }
 
-// ChildStatusRecord represents a child status record
+// ChildStatus Record represents a child status
 type ChildStatusRecord struct {
 	Level int    // CSTA level; always 0
 	Xref  string // xref_id of 0 level CSTA
 	Name  string // CSTA.NAME
 }
 
-// ChildStatusRecords represents a slice of child status records
+// ChildStatusRecords represents a
 type ChildStatusRecords []*ChildStatusRecord
 
-// CitationRecord represents a link to a source record
+// CitationRecord is a SourceLink
+
 type CitationRecord struct {
 	Level         int           // ..SOUR level; not 0
 	Value         string        // value of ..SOUR excluding xref
@@ -93,10 +94,8 @@ type CitationRecord struct {
 	Note          NoteRecords   // ..SOUR.NOTE
 }
 
-// CitationRecords represents a slice of links to a source
 type CitationRecords []*CitationRecord
 
-// DataRecord represents a data record
 type DataRecord struct {
 	Level     int          // ..DATA level
 	Data      string       // value of ..DATA
@@ -108,10 +107,8 @@ type DataRecord struct {
 	Note      NoteRecords  // ..DATA.NOTE
 }
 
-// DataRecords represents a slice of data records
 type DataRecords []*DataRecord
 
-// DateRecord represents a date
 type DateRecord struct {
 	Level int      // ..DATE level
 	Date  string   // ..DATE value
@@ -130,7 +127,7 @@ type EventDefinitionRecord struct {
 	Xref  string // Level 0 xref
 }
 
-// EventDefinitionRecords represents a slice of event definition records.
+// EventDefinitionRecords represents a slice of event definiion records.
 type EventDefinitionRecords []*EventDefinitionRecord
 
 // EventRecord represents a GEDCOM event record.
@@ -207,21 +204,18 @@ type FamilyRecord struct {
 // FamilyRecords represents a slice of family records.
 type FamilyRecords []*FamilyRecord
 
-// FootnoteRecord represents a footnote record
 type FootnoteRecord struct {
 	Level     int      // ..FOOT level
 	Value     string   // ..FOOT value
 	Component []string // ..FOOT.COMP
 }
 
-// GedcomRecord represents a gedcom record
 type GedcomRecord struct {
 	Level   int    // HEAD.GEDC level
 	Version string // HEAD.GEDC.VERS
 	Form    string // HEAD.GEDC.FORM
 }
 
-// HeaderRecord represents a header record
 type HeaderRecord struct {
 	Level        int                 // HEAD level; always 0
 	Xref         string              // Fake id; set to HEAD
@@ -242,17 +236,15 @@ type HeaderRecord struct {
 	Schema       *SchemaRecord       // HEAD.SCHEMA
 }
 
-// HistoryRecord represents a history record
 type HistoryRecord struct {
 	Level    int             // ..HIST level
 	History  string          // ..HIST value
 	Citation CitationRecords // ..HIST.SOUR
 }
 
-// HistoryRecords represents a slice of history records
 type HistoryRecords []*HistoryRecord
 
-// IndividualLink represents a link to an individual record
+// IndividualLink represents a link to an individual
 type IndividualLink struct {
 	Level        int               // ..INDI level
 	Tag          string            // tag from FAM.HUSB or FAM.WIFE or FAM.CHILD or INDI.ASSO
@@ -263,10 +255,10 @@ type IndividualLink struct {
 	Note         NoteRecords       // FAM.HUSB.NOTE or FAM.WIFE.NOTE or FAM.CHILD.NOTE
 }
 
-// IndividualLinks represents a slice of links to individual records
+// IndividualLinks represents a slice of IndividualLink structures
 type IndividualLinks []*IndividualLink
 
-// IndividualRecord represents an individual record
+// IndividualRecord represents an individual
 type IndividualRecord struct {
 	Level               int                        // INDI level; always 0
 	Xref                string                     // xref_id of INDI
@@ -306,10 +298,8 @@ type IndividualRecord struct {
 	Miscellaneous       []string                   // INDI.MISC
 }
 
-// IndividualRecords represents a slice of individual records
 type IndividualRecords []*IndividualRecord
 
-// MediaRecord represents a media record
 type MediaRecord struct {
 	Level               int                        // ..OBJE level
 	Xref                string                     // xref_id of 0 level OBJE
@@ -333,10 +323,8 @@ type MediaRecord struct {
 	Change              *ChangeRecord              // INDI.CHAN
 }
 
-// MediaRecords represents a slice of media records
 type MediaRecords []*MediaRecord
 
-// NameRecord represents a name record
 type NameRecord struct {
 	Level              int             // ..NAME level
 	Name               string          // ..NAME value
@@ -354,10 +342,8 @@ type NameRecord struct {
 	Note               NoteRecords     // ..NAME.NOTE
 }
 
-// NameRecords represents a slice of name records
 type NameRecords []*NameRecord
 
-// NoteRecord represents a note record
 type NoteRecord struct {
 	Level               int                        // ..NOTE level
 	Xref                string                     // .. xref_value of 0 level NOTE
@@ -368,10 +354,14 @@ type NoteRecord struct {
 	Change              *ChangeRecord              // ..SOUR.CHAN
 }
 
-// NoteRecords represents a slice of note records
 type NoteRecords []*NoteRecord
 
-// PlacePartRecord represents a place part record
+type xPlaceLink struct {
+	Level int          // ..PLAC
+	Xref  string       // xref to zero level PLAC
+	Place *PlaceRecord // link to zero level PLAC
+}
+
 type PlacePartRecord struct {
 	Level        int    // ..PLAC.PLAn level, n=0..4
 	Tag          string // ..PLAC.PLAn tag
@@ -379,10 +369,8 @@ type PlacePartRecord struct {
 	Jurisdiction string // ..PLAC.PLAn.JURI
 }
 
-// PlacePartRecords represents a slice of place part records
 type PlacePartRecords []*PlacePartRecord
 
-// PlaceRecord represents a place record
 type PlaceRecord struct {
 	Level     int              // ..PLAC level; 0 or higher
 	Xref      string           // xref_id of 0 level PLAC
@@ -396,10 +384,8 @@ type PlaceRecord struct {
 	Change    *ChangeRecord    // ..PLAC.CHAN
 }
 
-// PlaceRecords represents a slice of place records
 type PlaceRecords []*PlaceRecord
 
-// RepositoryLink represents a link to a repository record
 type RepositoryLink struct {
 	Level      int               // ..REPO level
 	Xref       string            // xref_id of 0 level REPO
@@ -408,10 +394,8 @@ type RepositoryLink struct {
 	Note       NoteRecords       // ..REPO.NOTE
 }
 
-// RepositoryLinks represents a slice of links to repository records
 type RepositoryLinks []*RepositoryLink
 
-// RepositoryRecord represents a repository record
 type RepositoryRecord struct {
 	Level               int                        // REPO level; always 0
 	Xref                string                     // xref_id of 0 level REPO
@@ -425,10 +409,8 @@ type RepositoryRecord struct {
 	Change              *ChangeRecord              // REPO.CHAN
 }
 
-// RepositoryRecords represents a slice of repository records
 type RepositoryRecords []*RepositoryRecord
 
-// RoleRecord represents a role record
 type RoleRecord struct {
 	Level      int               // ..ROLE level
 	Role       string            // ..ROLE no-ref value
@@ -436,10 +418,8 @@ type RoleRecord struct {
 	Principal  string            // ..ROLE.PRIN
 }
 
-// RoleRecords represents a slice of role records
 type RoleRecords []*RoleRecord
 
-// RootRecord represents a the root record of a GEDCOM file.
 type RootRecord struct {
 	Level            int                    // root level
 	Header           *HeaderRecord          // HEAD
@@ -458,21 +438,19 @@ type RootRecord struct {
 	Trailer          *TrailerRecord         // TRLR
 }
 
-// SchemaRecord represents a schema record
 type SchemaRecord struct {
 	Level int      // ..SCHEMA level
 	Data  []string // schema data
 }
 
-// ShortTitleRecord represents a short title record
 type ShortTitleRecord struct {
 	Level      int    // ..SHTI level
 	ShortTitle string // ..SHTI value
 	Indexed    string // ..SHTI.INDX
 }
 
-// SourceRecord represents a source record.
-// Note: A CitationRecord is a link to a source record
+// SourceRecord
+// Note: a CitationRecord is a link to a SourceRecord
 type SourceRecord struct {
 	Level               int                        // ..SOUR level; always 0
 	Xref                string                     // xref_id of 0 level SOUR
@@ -497,19 +475,15 @@ type SourceRecord struct {
 	Change              *ChangeRecord              // ..SOUR.CHAN
 }
 
-// SourceRecords represents a slice of source records
 type SourceRecords []*SourceRecord
 
-// SubmissionLink represents a link to a submission record
 type SubmissionLink struct {
 	Level      int               // ..SUBN level
 	Submission *SubmissionRecord // ..SUBN.SUBM
 }
 
-// SubmissionLinks represents a slice of links to submission records
 type SubmissionLinks []*SubmissionLink
 
-// SubmissionRecord represents a submission record.
 type SubmissionRecord struct {
 	Level          int              // SUBN level; always 0
 	Xref           string           // xref_id of SUBN
@@ -522,20 +496,16 @@ type SubmissionRecord struct {
 	RIN            string           // SUBN.RIN
 }
 
-// SubmissionRecords represents a slice of submission records
 type SubmissionRecords []*SubmissionRecord
 
-// SubmitterLink represents a link to a submitter record
 type SubmitterLink struct {
 	Level     int    // ..SUBM level
 	Tag       string // SUBM link tag
 	Submitter *SubmitterRecord
 }
 
-// SubmitterLinks represents a slice of links to submitter records
 type SubmitterLinks []*SubmitterLink
 
-// SubmitterRecord represents a submitter record
 type SubmitterRecord struct {
 	Level            int            // SUBM level; always 0
 	Xref             string         // xref_id of SUBM
@@ -554,10 +524,8 @@ type SubmitterRecord struct {
 	Change           *ChangeRecord  // SUBM.CHAN
 }
 
-// SubmitterRecords represents a slice of submitter records
 type SubmitterRecords []*SubmitterRecord
 
-// SystemRecord represents a system record
 type SystemRecord struct {
 	Level       int             // ..HEAD.SOUR level
 	SystemName  string          // HEAD.SOUR value
@@ -567,18 +535,15 @@ type SystemRecord struct {
 	SourceData  *DataRecord     // HEAD.SOUR.DATA
 }
 
-// TrailerRecord represents a trailer record
 type TrailerRecord struct {
 	Level int    // ..TRLR level; always 0
 	Xref  string // Fake id: set to TRLR
 }
 
-// UserReferenceNumberRecord represents a user reference number record
 type UserReferenceNumberRecord struct {
 	Level               int    // .REFN level
 	UserReferenceNumber string // ..REFN value
 	Type                string // ..REFN.TYPE
 }
 
-// UserReferenceNumberRecords represents a slice of user reference number records.
 type UserReferenceNumberRecords []*UserReferenceNumberRecord
