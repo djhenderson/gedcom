@@ -159,7 +159,7 @@ type EventRecord struct {
 	Status      string          // ..EVEN.STAT
 	UID_        []string        // ..EVEN._UID
 	RIN         string          // ..EVEN.RIN
-	Email       string          // .. EVEN.EMAIL
+	Email       string          // ..EVEN.EMAIL
 	Media       MediaRecords    // ..EVEN.OBJE
 	Citation    CitationRecords // ..EVEN.SOUR
 	Note        NoteRecords     // ..EVEN.NOTE
@@ -503,7 +503,7 @@ type SourceRecords []*SourceRecord
 // SubmissionLink represents a link to a submission record
 type SubmissionLink struct {
 	Level      int               // ..SUBN level
-	Submission *SubmissionRecord // ..SUBN.SUBM
+	Submission *SubmissionRecord // target of ..SUBN
 }
 
 // SubmissionLinks represents a slice of links to submission records
@@ -527,9 +527,9 @@ type SubmissionRecords []*SubmissionRecord
 
 // SubmitterLink represents a link to a submitter record
 type SubmitterLink struct {
-	Level     int    // ..SUBM level
-	Tag       string // SUBM link tag
-	Submitter *SubmitterRecord
+	Level     int              // ..SUBM level
+	Tag       string           // ..SUBM link tag
+	Submitter *SubmitterRecord // target of ..SUBM
 }
 
 // SubmitterLinks represents a slice of links to submitter records
@@ -559,7 +559,7 @@ type SubmitterRecords []*SubmitterRecord
 
 // SystemRecord represents a system record
 type SystemRecord struct {
-	Level       int             // ..HEAD.SOUR level
+	Level       int             // HEAD.SOUR level
 	SystemName  string          // HEAD.SOUR value
 	Version     string          // HEAD.SOUR.VERS
 	ProductName string          // HEAD.SOUR.NAME
@@ -575,7 +575,7 @@ type TrailerRecord struct {
 
 // UserReferenceNumberRecord represents a user reference number record
 type UserReferenceNumberRecord struct {
-	Level               int    // .REFN level
+	Level               int    // ..REFN level
 	UserReferenceNumber string // ..REFN value
 	Type                string // ..REFN.TYPE
 }
