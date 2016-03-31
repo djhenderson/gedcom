@@ -316,6 +316,7 @@ type IndividualRecords []*IndividualRecord
 type MediaLink struct {
 	Level int          // ..OBJE level
 	Tag   string       // tag from OBJE or _PROF
+	Value string       // value from OBJE or _PROF
 	Media *MediaRecord // target of OBJE or _PROF
 }
 
@@ -468,7 +469,7 @@ type RootRecord struct {
 	Family           FamilyRecords          // FAM
 	Repository       RepositoryRecords      // REPO
 	Source           SourceRecords          // SOUR
-	Media            MediaRecords           // OBJE
+	Media            MediaLinks             // OBJE
 	Note             NoteRecords            // NOTE
 	EventDefinition_ EventDefinitionRecords // _EVENT_DEFN
 	ChildStatus      ChildStatusRecords     // CSTA

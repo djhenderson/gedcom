@@ -181,6 +181,7 @@ func (r *CallNumberRecord) String() string {
 	s = fmt.Sprintf("%s%d CALN %s", indent(r.Level), r.Level, r.CallNumber)
 	ss = append(ss, s)
 
+	// In this unique case, the value is a string, not a media record or link
 	if r.Media != "" {
 		s = fmt.Sprintf("%s%d MEDI %s", indent(r.Level+1), r.Level+1, r.Media)
 		ss = append(ss, s)
@@ -302,10 +303,8 @@ func (r *CitationRecord) String() string {
 	}
 
 	if r.Media != nil {
-		for _, media := range r.Media {
-			s = media.String()
-			ss = append(ss, s)
-		}
+		s = r.Media.String()
+		ss = append(ss, s)
 	}
 
 	if r.CONS != "" {
@@ -352,8 +351,6 @@ func (r *DataRecord) String() string {
 	var ss []string
 	var s string
 
-	//s = fmt.Sprintf("%s%d DATA %s", indent(r.Level), r.Level, r.Data)
-	//ss = append(ss, s)
 	sas := LongString(r.Level, "", "DATA", r.Data)
 	ss = append(ss, sas...)
 
@@ -369,8 +366,6 @@ func (r *DataRecord) String() string {
 
 	if r.Text != nil {
 		for _, text := range r.Text {
-			//s = fmt.Sprintf("%s%d TEXT %s", indent(r.Level+1), r.Level+1, text)
-			//ss = append(ss, s)
 			sas := LongString(r.Level+1, "", "TEXT", text)
 			ss = append(ss, sas...)
 		}
@@ -433,8 +428,6 @@ func (r *DateRecord) String() string {
 
 	if r.Text != nil {
 		for _, text := range r.Text {
-			//s = fmt.Sprintf("%s%d TEXT %s", indent(r.Level+1), r.Level+1, text)
-			//ss = append(ss, s)
 			sas := LongString(r.Level+1, "", "TEXT", text)
 			ss = append(ss, sas...)
 		}
@@ -445,7 +438,7 @@ func (r *DateRecord) String() string {
 
 // String stringifies a GEDCOM event definition record
 func (r EventDefinitionRecord) String() string {
-	log.Fatal("EventDefinition Stringer not implemented")
+	log.Fatal("EventDefinition.String() not implemented")
 	return ""
 }
 
@@ -562,12 +555,8 @@ func (r *EventRecord) String() string {
 	}
 
 	if r.Media != nil {
-		for _, media := range r.Media {
-			s = media.String()
-			if s != "" {
-				ss = append(ss, s)
-			}
-		}
+		s = r.Media.String()
+		ss = append(ss, s)
 	}
 
 	if r.Citation != nil {
@@ -1172,6 +1161,7 @@ func (r *MediaLink) String() string {
 	var ss []string
 	var s string
 
+	log.Printf("\nMediaLink type(r): %T at %p\n%#v\n", r, r, r)
 	s = fmt.Sprintf("%s%d %s @%s@", indent(r.Level), r.Level, r.Tag, r.Media.Xref)
 	ss = append(ss, s)
 
@@ -1183,9 +1173,14 @@ func (r MediaLinks) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("MediaLinks type(r): %T\n", r)
+	log.Printf("\nMediaLinks type(r): %T at %p\n%#v\n", r, r, r)
 	for _, x := range r {
-		s = x.String()
+		log.Printf("\nMediaLink type(x): %T at %p\n%#v\n", x, x, x)
+		if x.Value != "" {
+			s = x.String()
+		} else {
+			s = x.Media.String()
+		}
 		ss = append(ss, s)
 	}
 
@@ -1197,6 +1192,7 @@ func (r *MediaRecord) String() string {
 	var ss []string
 	var s string
 
+	log.Printf("\nMediaRecord type(r): %T at %p\n%#v\n", r, r, r)
 	id0, idN := "", ""
 	if r.Xref != "" {
 		id0 = fmt.Sprintf(" @%s@ ", r.Xref)
@@ -1312,8 +1308,9 @@ func (r MediaRecords) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("MediaRecords type(r): %T\n", r)
+	log.Printf("\nMediaRecords type(r): %T at %p\n%#v\n", r, r, r)
 	for _, x := range r {
+		log.Printf("\nMediaRecord type(x): %T at %p\n%#v\n", x, x, x)
 		s = x.String()
 		ss = append(ss, s)
 	}
@@ -1727,10 +1724,8 @@ func (r *RootRecord) String() string {
 	}
 
 	if r.Media != nil {
-		for _, x := range r.Media {
-			s = x.String()
-			ss = append(ss, s)
-		}
+		s = r.Media.String()
+		ss = append(ss, s)
 	}
 
 	if r.ChildStatus != nil {
@@ -1795,8 +1790,6 @@ func (r *SourceRecord) String() string {
 	}
 
 	if r.Title != "" {
-		//s = fmt.Sprintf("%s%d TITL %s", indent(r.Level+1), r.Level+1, r.Title)
-		//ss = append(ss, s)
 		sas := LongString(r.Level+1, "", "TITL", r.Title)
 		ss = append(ss, sas...)
 	}
@@ -1823,8 +1816,6 @@ func (r *SourceRecord) String() string {
 
 	if r.Text != nil {
 		for _, text := range r.Text {
-			//s = fmt.Sprintf("%s%d TEXT %s", indent(r.Level+1), r.Level+1, text)
-			//ss = append(ss, s)
 			sas := LongString(r.Level+1, "", "TEXT", text)
 			ss = append(ss, sas...)
 		}
@@ -1882,6 +1873,7 @@ func (r *SourceRecord) String() string {
 
 	if r.Change != nil {
 		s = r.Change.String()
+		ss = append(ss, s)
 	}
 	return strings.Join(ss, "\n")
 }
