@@ -291,8 +291,6 @@ func (r *CitationRecord) String() string {
 
 	if r.Text != nil {
 		for _, text := range r.Text {
-			//s = fmt.Sprintf("%s%d TEXT %s", indent(r.Level+1), r.Level+1, text)
-			//ss = append(ss, s)
 			sas := LongString(r.Level+1, "", "TEXT", text)
 			ss = append(ss, sas...)
 		}
