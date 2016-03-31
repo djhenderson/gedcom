@@ -178,6 +178,7 @@ func (r *BusinessRecord) String() string {
 func (r *CallNumberRecord) String() string {
 	var ss []string
 	var s string
+
 	s = fmt.Sprintf("%s%d CALN %s", indent(r.Level), r.Level, r.CallNumber)
 	ss = append(ss, s)
 
