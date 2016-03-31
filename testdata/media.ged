@@ -20,6 +20,14 @@
     2 PLAC Whoville, Alberta, Canada
     2 ADDR Whoville Hospital
     2 OBJE @M3@
+  1 OBJE
+    2 FORM URL
+    2 TITL GEDCOM 5.5 documentation web site
+    2 FILE http://www.example.com/55gctoc.htm
+  1 OBJE
+    2 FORM URL
+    2 TITL Email comments on this GEDCOM file to here
+    2 FILE mailto:support@example.com
   1 OBJE @M1@
   1 OBJE @M2@
 0 @M1@ OBJE
