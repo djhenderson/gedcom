@@ -1,0 +1,64 @@
+0 HEAD
+  1 CHAR UTF-8
+  1 GEDC
+    2 VERS 5.5.1
+    2 FORM EVENT-LINKED
+  1 LANG English
+  1 SUBM @SUBM1@
+0 @SUBM1@ SUBM
+  1 NAME John Brown
+0 @P1@ PLAC Whoville, Alberta, Canada
+  1 PLA1 Whoville
+    2 JURI Village
+  1 PLA2 Alberta
+    2 JURI Province
+  1 PLA3 Canada
+    2 JURI Country
+0 @E1@ EVEN
+  1 TYPE BIRT
+  1 DATE 13 Jan 1953
+  1 PLAC @P1@
+  1 ADDR Whoville Hospital
+  1 ROLE Child @I1@
+  1 ROLE Father @I2@
+  1 ROLE Mother @I3@
+0 @E2@ EVEN
+  1 TYPE EDUC
+  1 DATE 1959
+  1 PLAC @P1@
+  1 ADDR Whoville School
+  1 NOTE Grade 1
+  1 ROLE Student @I1@
+0 @E3@ EVEN
+  1 TYPE ILLN
+  1 DATE 1960
+  1 PLAC @P1@
+  1 ADDR Whoville Hospital
+  1 NOTE Pneumonia
+  1 ROLE Patient @I1@
+0 @I1@ INDI
+  1 NAME John /Brown/
+    2 GIVN John
+    2 SURN Brown
+  1 SEX M
+  1 BIRT
+    2 DATE 13 Jan 1953
+    2 PLAC Whoville, Alberta, Canada
+    2 ADDR Whoville Hospital
+  1 EDUC
+    2 DATE 1959
+    2 PLAC Whoville, Alberta, Canada
+    2 ADDR Whoville School
+    2 NOTE Grade 1
+  1 ILLN
+    2 DATE 1960
+    2 PLAC Whoville, Alberta, Canada
+    2 ADDR Whoville Hospital
+    2 NOTE Pneumonia
+0 @I2@ INDI
+  1 NAME James /Brown/
+  1 SEX M
+0 @I3@ INDI
+  1 NAME Alice /Grey/
+  1 SEX F
+0 TRLR

@@ -1,0 +1,37 @@
+0 HEAD
+  1 SUBM @SUBM1@
+  1 GEDC
+    2 VERS 5.5.1
+    2 FORM LINEAGE-LINKED
+  1 CHAR UTF-8
+  1 LANG English
+0 @SUBM1@ SUBM
+  1 NAME John Brown
+0 @I1@ INDI
+  1 NAME John /Brown/
+    2 GIVN John
+    2 SURN Brown
+    2 _PRIM Y
+  1 SEX M
+  1 _PROF @M1@
+  1 BIRT
+    2 _PRIM Y
+    2 DATE 13 Jan 1953
+    2 PLAC Whoville, Alberta, Canada
+    2 ADDR Whoville Hospital
+    2 OBJE @M3@
+  1 OBJE @M1@
+  1 OBJE @M2@
+0 @M1@ OBJE
+  1 FILE john1.jpg
+  1 FORM PNG
+  1 TITL John Brown profile
+0 @M2@ OBJE
+  1 FILE john2.png
+  1 FORM JPG
+  1 TITL John Brown candid
+0 @M3@ OBJE
+  1 FILE hospital.png
+  1 FORM JPG
+  1 TITL Whoville Hospital
+0 TRLR

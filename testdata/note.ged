@@ -1,0 +1,35 @@
+0 HEAD
+  1 CHAR UTF-8
+  1 GEDC
+    2 VERS 5.5.1
+    2 FORM LINEAGE-LINKED
+  1 LANG English
+  1 SUBM @SUBM1@
+0 @SUBM1@ SUBM
+  1 NAME John Brown
+0 @I1@ INDI
+  1 NAME John /Brown/
+    2 GIVN John
+    2 SURN Brown
+    2 _PRIM Y
+  1 SEX M
+  1 NOTE @N1@
+    2 RIN #1
+  1 BIRT
+    2 _PRIM Y
+    2 DATE 13 Jan 1953
+    2 PLAC Whoville, Alberta, Canada
+    2 ADDR Whoville Hospital
+	2 NOTE start of note
+	3 CONT birth note about nurse
+	3 RIN #2
+  1 NOTE individual note
+  2 CONT 2nd part of indi note
+  2 RIN #3
+0 @N1@ NOTE
+1 CONT stand alone note
+1 CONT at the end
+2 CONC .
+1 CONT Another sentence.
+1 RIN #4
+0 TRLR
