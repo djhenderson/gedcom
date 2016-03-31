@@ -86,14 +86,14 @@ type CitationRecord struct {
 	Data          DataRecords   // ..SOUR.DATA
 	Text          []string      // ..SOUR.TEXT
 	Quality       string        // ..SOUR.QUAY
-	Media         MediaRecords  // ..SOUR.OBJE
+	Media         MediaLinks    // ..SOUR.OBJE
 	CONS          string        // ..SOUR.CONS
 	Direct        string        // ..SOUR.DIRE
 	SourceQuality string        // ..SOUR.SOQU
 	Note          NoteRecords   // ..SOUR.NOTE
 }
 
-// CitationRecords represents a slice of links to a source
+// CitationRecords represents a slice of links to source records
 type CitationRecords []*CitationRecord
 
 // DataRecord represents a data record
@@ -160,7 +160,7 @@ type EventRecord struct {
 	UID_        []string        // ..EVEN._UID
 	RIN         string          // ..EVEN.RIN
 	Email       string          // ..EVEN.EMAIL
-	Media       MediaRecords    // ..EVEN.OBJE
+	Media       MediaLinks      // ..EVEN.OBJE
 	Citation    CitationRecords // ..EVEN.SOUR
 	Note        NoteRecords     // ..EVEN.NOTE
 	Change      *ChangeRecord   // ..EVEN.CHAN
@@ -196,7 +196,7 @@ type FamilyRecord struct {
 	UID_                []string                   // FAM._UID
 	RIN                 string                     // FAM.RIN
 	UserReferenceNumber UserReferenceNumberRecords // FAM.REFN
-	Media               MediaRecords               // FAM.OBJE
+	Media               MediaLinks                 // FAM.OBJE
 	Citation            CitationRecords            // FAM.SOUR
 	Note                NoteRecords                // FAM.NOTE
 	Submitter           SubmitterLinks             // FAM.SUBM
@@ -221,7 +221,8 @@ type GedcomRecord struct {
 	Form    string // HEAD.GEDC.FORM
 }
 
-// HeaderRecord represents a header record
+// HeaderRecord represents a GEDCOM header record
+// There can be only one!
 type HeaderRecord struct {
 	Level        int                 // HEAD level; always 0
 	Xref         string              // Fake id; set to HEAD
@@ -235,7 +236,8 @@ type HeaderRecord struct {
 	Language     string              // HEAD.LANG
 	Copyright    string              // HEAD.COPR
 	Place        *PlaceRecord        // HEAD.PLAC
-	Root_        *IndividualLink     // HEAD._ROOT
+	RootPerson_  *IndividualLink     // HEAD._ROOT - FmP root person
+	HomePerson_  *IndividualLink     // HEAD._HME - home person
 	Note         NoteRecords         // HEAD.NOTE
 	Submitter    SubmitterLinks      // HEAD.SUBM
 	Submission   SubmissionLinks     // HEAD.SUBN
@@ -279,7 +281,7 @@ type IndividualRecord struct {
 	Family              FamilyLinks                // INDI.FAMS
 	Address             AddressRecords             // INDI.ADDR
 	Phone               []string                   // INDI.PHON
-	Media               MediaRecords               // INDI.OBJE
+	Media               MediaLinks                 // INDI.OBJE
 	Health              string                     // INDI.HEAL
 	History             HistoryRecords             // INDI.HIST
 	Quality             string                     // INDI.QUAY
@@ -304,15 +306,28 @@ type IndividualRecord struct {
 	Father              *IndividualLink            // INDI.FATH
 	Mother              *IndividualLink            // INDI.MOTH
 	Miscellaneous       []string                   // INDI.MISC
+	ProfilePicture_     *MediaLink                 // INDI._PROF
 }
 
 // IndividualRecords represents a slice of individual records
 type IndividualRecords []*IndividualRecord
 
-// MediaRecord represents a media record
+// MediaLink represents a link to an media record
+type MediaLink struct {
+	Level int          // ..OBJE level
+	Tag   string       // tag from OBJE or _PROF
+	Media *MediaRecord // target of OBJE or _PROF
+}
+
+// MediaLinks represents a slice of links to media records
+type MediaLinks []*MediaLink
+
+// MediaRecord represents a GEDCOM media record
 type MediaRecord struct {
 	Level               int                        // ..OBJE level
-	Xref                string                     // xref_id of 0 level OBJE
+	Xref                string                     // xref_id of 0 level or xref from value
+	Tag                 string                     // ..TAG tag either OBJE or _PROF
+	Value               string                     // value without xref
 	Format              string                     // OBJE.FORM
 	URL_                string                     // OBJE._URL
 	FileName            string                     // OBJE.FILE
@@ -322,11 +337,12 @@ type MediaRecord struct {
 	Text                string                     // OBJE.TEXT
 	Note                NoteRecords                // OBJE.NOTE
 	Date_               string                     // OBJE._DATE
-	AstId_              string                     // OBJE._ASTID
-	AstType_            string                     // OBJE._ASTTYP
-	AstDesc_            string                     // OBJE._ASTDESC
-	AstPerm_            string                     // OBJE._ASTPERM
-	AstUpPid_           string                     // OBJE._ASTUPPID
+	AstId_              string                     // OBJE._ASTID - FmP identifier
+	AstType_            string                     // OBJE._ASTTYP - FmP type
+	AstDesc_            string                     // OBJE._ASTDESC - FmP description
+	AstLoc_             string                     // OBJE._ASTLOC - FmP location
+	AstPerm_            string                     // OBJE._ASTPERM - FmP permissions
+	AstUpPid_           string                     // OBJE._ASTUPPID - FmP update identifier?
 	BinaryLargeObject   *BlobRecord                // OBJE.BLOB
 	UserReferenceNumber UserReferenceNumberRecords // OBJE.REFN
 	RIN                 string                     // OBJE.RIN
@@ -347,7 +363,8 @@ type NameRecord struct {
 	Surname            string          // ..NAME.SURN
 	Suffix             string          // ..NAME.NSFX
 	PreferedGivenName_ string          // ..NAME._PGVN
-	Primary_           string          // ..NAME._PRIM
+	Primary_           string          // ..NAME._PRIM - FmP primary/preferred
+	NameType           string          // ..NAME.TYPE
 	AKA_               []string        // ..NAME._AKA
 	Nickname           []string        // ..NAME.NICK
 	Citation           CitationRecords // ..NAME.SOUR
@@ -357,7 +374,7 @@ type NameRecord struct {
 // NameRecords represents a slice of name records
 type NameRecords []*NameRecord
 
-// NoteRecord represents a note record
+// NoteRecord represents a GEDCOM note record
 type NoteRecord struct {
 	Level               int                        // ..NOTE level
 	Xref                string                     // .. xref_value of 0 level NOTE
@@ -382,7 +399,7 @@ type PlacePartRecord struct {
 // PlacePartRecords represents a slice of place part records
 type PlacePartRecords []*PlacePartRecord
 
-// PlaceRecord represents a place record
+// PlaceRecord represents a GEDCOM place record
 type PlaceRecord struct {
 	Level     int              // ..PLAC level; 0 or higher
 	Xref      string           // xref_id of 0 level PLAC
@@ -411,7 +428,7 @@ type RepositoryLink struct {
 // RepositoryLinks represents a slice of links to repository records
 type RepositoryLinks []*RepositoryLink
 
-// RepositoryRecord represents a repository record
+// RepositoryRecord represents a GEDCOM repository record
 type RepositoryRecord struct {
 	Level               int                        // REPO level; always 0
 	Xref                string                     // xref_id of 0 level REPO
@@ -439,9 +456,9 @@ type RoleRecord struct {
 // RoleRecords represents a slice of role records
 type RoleRecords []*RoleRecord
 
-// RootRecord represents a the root record of a GEDCOM file.
+// RootRecord represents the root record of a GEDCOM file.
 type RootRecord struct {
-	Level            int                    // root level
+	Level            int                    // root level, always zero
 	Header           *HeaderRecord          // HEAD
 	Submitter        SubmitterRecords       // SUBM
 	Submission       SubmissionRecords      // SUBN
@@ -471,7 +488,7 @@ type ShortTitleRecord struct {
 	Indexed    string // ..SHTI.INDX
 }
 
-// SourceRecord represents a source record.
+// SourceRecord represents a GEDCOM source record.
 // Note: A CitationRecord is a link to a source record
 type SourceRecord struct {
 	Level               int                        // ..SOUR level; always 0
@@ -492,7 +509,7 @@ type SourceRecord struct {
 	RIN                 string                     // ..SOUR.RIN
 	ShortAuthor         string                     // ..SOUR.SHAU
 	ShortTitle          *ShortTitleRecord          // ..SOUR.SHTI
-	Media               MediaRecords               // ..SOUR.OBJE
+	Media               MediaLinks                 // ..SOUR.OBJE
 	Note                NoteRecords                // ..SOUR.NOTE
 	Change              *ChangeRecord              // ..SOUR.CHAN
 }
@@ -509,7 +526,7 @@ type SubmissionLink struct {
 // SubmissionLinks represents a slice of links to submission records
 type SubmissionLinks []*SubmissionLink
 
-// SubmissionRecord represents a submission record.
+// SubmissionRecord represents a GEDCOM submission record.
 type SubmissionRecord struct {
 	Level          int              // SUBN level; always 0
 	Xref           string           // xref_id of SUBN
@@ -546,7 +563,7 @@ type SubmitterRecord struct {
 	Email            string         // SUBM.EMAIL
 	WebSite          string         // SUBM.WWW
 	Language         string         // SUBM.LANG
-	Media            MediaRecords   // SUBM.OBJE
+	Media            MediaLinks     // SUBM.OBJE
 	RecordFileNumber string         // SUBM.RFN
 	STAL             string         // SUBM.STAL
 	NUMB             string         // SUBM.NUMB
@@ -567,7 +584,8 @@ type SystemRecord struct {
 	SourceData  *DataRecord     // HEAD.SOUR.DATA
 }
 
-// TrailerRecord represents a trailer record
+// TrailerRecord represents a GEDCOM trailer record
+// There can be only one!
 type TrailerRecord struct {
 	Level int    // ..TRLR level; always 0
 	Xref  string // Fake id: set to TRLR

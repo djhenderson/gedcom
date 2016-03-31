@@ -561,14 +561,15 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		case "EVEN":
-			rec := &EventRecord{Level: level, Value: value}
+			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
 
 		case "OBJE":
-			rec := d.media(stripXref(value))
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.Media = append(r.Media, rec)
-			d.pushParser(makeMediaParser(d, rec, level))
+			d.pushParser(makeMediaLinkParser(d, rec, level))
 
 		case "DATA":
 			rec := &DataRecord{Level: level, Data: value}
@@ -764,9 +765,10 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 			r.Quality = value
 
 		case "OBJE":
-			rec := d.media(stripXref(value))
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.Media = append(r.Media, rec)
-			d.pushParser(makeMediaParser(d, rec, level))
+			d.pushParser(makeMediaLinkParser(d, rec, level))
 
 		case "_UID":
 			r.UID_ = append(r.UID_, value)
@@ -881,9 +883,10 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 			d.pushParser(makeUserReferenceNumberParser(d, rec, level))
 
 		case "OBJE":
-			rec := d.media(stripXref(value))
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.Media = append(r.Media, rec)
-			d.pushParser(makeMediaParser(d, rec, level))
+			d.pushParser(makeMediaLinkParser(d, rec, level))
 
 		case "SOUR":
 			sour := d.source(stripXref(value))
@@ -1028,7 +1031,12 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 		case "_ROOT":
 			root := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: root}
-			r.Root_ = rec
+			r.RootPerson_ = rec
+
+		case "_HME":
+			home := d.individual(stripXref(value))
+			rec := &IndividualLink{Level: level, Tag: tag, Individual: home}
+			r.HomePerson_ = rec
 
 		default:
 			log.Printf("unhandled Header tag: %d %s %s\n", level, tag, value)
@@ -1143,9 +1151,10 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			d.pushParser(makeFamilyLinkParser(d, rec, level))
 
 		case "OBJE":
-			rec := d.media(stripXref(value))
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.Media = append(r.Media, rec)
-			d.pushParser(makeMediaParser(d, rec, level))
+			d.pushParser(makeMediaLinkParser(d, rec, level))
 
 		case "HEAL":
 			r.Health = value
@@ -1254,6 +1263,12 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 		case "MISC":
 			r.Miscellaneous = append(r.Miscellaneous, value)
 
+		case "_PROF":
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
+			r.ProfilePicture_ = rec
+			d.pushParser(makeMediaLinkParser(d, rec, level))
+
 		default:
 			log.Printf("unhandled Individual tag: %d %s %s\n", level, tag, value)
 		}
@@ -1261,8 +1276,22 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 	}
 }
 
+func makeMediaLinkParser(d *Decoder, r *MediaLink, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		default:
+			log.Printf("unhandled MediaLink tag: %d %s %s\r", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
 func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
-	r.Level = minLevel
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
@@ -1307,6 +1336,9 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 
 		case "_ASTDESC":
 			r.AstDesc_ = value
+
+		case "_ASTLOC":
+			r.AstLoc_ = value
 
 		case "_ASTPERM":
 			r.AstPerm_ = value
@@ -1367,6 +1399,9 @@ func makeNameParser(d *Decoder, r *NameRecord, minLevel int) parser {
 
 		case "_PGVN":
 			r.PreferedGivenName_ = value
+
+		case "TYPE":
+			r.NameType = value
 
 		case "_PRIM":
 			r.Primary_ = value
@@ -1609,6 +1644,7 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 
 			case "SOUR":
 				rec := d.source(xref)
+				rec.Value = value
 				r.Source = append(r.Source, rec)
 				d.pushParser(makeSourceParser(d, rec, level))
 
@@ -1621,6 +1657,7 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 
 			case "PLAC":
 				rec := d.place(xref)
+				rec.Name = value
 				r.Place = append(r.Place, rec)
 				d.pushParser(makePlaceParser(d, rec, level))
 
@@ -1789,9 +1826,10 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			d.pushParser(makeRepositoryLinkParser(d, rec, level))
 
 		case "OBJE":
-			rec := d.media(stripXref(value))
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.Media = append(r.Media, rec)
-			d.pushParser(makeMediaParser(d, rec, level))
+			d.pushParser(makeMediaLinkParser(d, rec, level))
 
 		case "NOTE":
 			rec := &NoteRecord{Level: level, Note: value}
@@ -1919,9 +1957,10 @@ func makeSubmitterParser(d *Decoder, r *SubmitterRecord, minLevel int) parser {
 			r.Language = value
 
 		case "OBJE":
-			rec := d.media(stripXref(value))
+			media := d.media(stripXref(value))
+			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.Media = append(r.Media, rec)
-			d.pushParser(makeMediaParser(d, rec, level))
+			d.pushParser(makeMediaLinkParser(d, rec, level))
 
 		case "RFN":
 			r.RecordFileNumber = value

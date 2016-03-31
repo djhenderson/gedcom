@@ -841,8 +841,13 @@ func (r *HeaderRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Root_ != nil {
-		s = r.Root_.String()
+	if r.RootPerson_ != nil {
+		s = r.RootPerson_.String()
+		ss = append(ss, s)
+	}
+
+	if r.HomePerson_ != nil {
+		s = r.HomePerson_.String()
 		ss = append(ss, s)
 	}
 
@@ -969,6 +974,11 @@ func (r *IndividualRecord) String() string {
 
 	if r.Sex != "" {
 		s = fmt.Sprintf("%s%d SEX %s", indent(r.Level+1), r.Level+1, r.Sex)
+		ss = append(ss, s)
+	}
+
+	if r.ProfilePicture_ != nil {
+		s = r.ProfilePicture_.String()
 		ss = append(ss, s)
 	}
 
@@ -1159,6 +1169,31 @@ func (r IndividualRecords) String() string {
 	return strings.Join(ss, "\n")
 }
 
+// String stringifies a GEDCOM media links
+func (r *MediaLink) String() string {
+	var ss []string
+	var s string
+
+	s = fmt.Sprintf("%s%d %s @%s@", indent(r.Level), r.Level, r.Tag, r.Media.Xref)
+	ss = append(ss, s)
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of links to media records
+func (r MediaLinks) String() string {
+	var ss []string
+	var s string
+
+	//log.Printf("MediaLinks type(r): %T\n", r)
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
 // String stringifies a GEDCOM media record
 func (r *MediaRecord) String() string {
 	var ss []string
@@ -1173,7 +1208,7 @@ func (r *MediaRecord) String() string {
 		}
 	}
 
-	s = fmt.Sprintf("%s%d%s OBJE%s", indent(r.Level), r.Level, id0, idN)
+	s = fmt.Sprintf("%s%d%s %s%s", indent(r.Level), r.Level, id0, "OBJE", idN)
 	ss = append(ss, s)
 
 	if r.Format != "" {
@@ -1228,6 +1263,11 @@ func (r *MediaRecord) String() string {
 
 	if r.AstDesc_ != "" {
 		s = fmt.Sprintf("%s%d _ASTDESC %s", indent(r.Level+1), r.Level+1, r.AstDesc_)
+		ss = append(ss, s)
+	}
+
+	if r.AstLoc_ != "" {
+		s = fmt.Sprintf("%s%d _ASTLOC %s", indent(r.Level+1), r.Level+1, r.AstLoc_)
 		ss = append(ss, s)
 	}
 
@@ -1323,6 +1363,11 @@ func (r *NameRecord) String() string {
 
 	if r.PreferedGivenName_ != "" {
 		s = fmt.Sprintf("%s%d _PGVN %s", indent(r.Level+1), r.Level+1, r.PreferedGivenName_)
+		ss = append(ss, s)
+	}
+
+	if r.NameType != "" {
+		s = fmt.Sprintf("%s%d _PRIM %s", indent(r.Level+1), r.Level+1, r.Primary_)
 		ss = append(ss, s)
 	}
 
