@@ -151,7 +151,6 @@ type EventRecord struct {
 	Husband     *IndividualLink // ..EVEN.HUSB
 	Wife        *IndividualLink // ..EVEN.WIFE
 	Spouse      *IndividualLink // ..EVEN.SPOU
-	Age         string          // ..EVEN.AGE
 	Agency      string          // ..EVEN.AGNC
 	Cause       string          // ..EVEN.CAUS
 	Temple      string          // ..EVEN.TEMP
@@ -229,7 +228,6 @@ type HeaderRecord struct {
 	SourceSystem *SystemRecord       // HEAD.SOUR
 	Destination  string              // HEAD.DEST
 	Date         *DateRecord         // HEAD.DATE
-	Time         string              // HEAD.TIME
 	FileName     string              // HEAD.FILE
 	Gedcom       *GedcomRecord       // HEAD.GEDC
 	CharacterSet *CharacterSetRecord // HEAD.CHAR
@@ -263,6 +261,7 @@ type IndividualLink struct {
 	Event        EventRecords      // FAM.CHILD.SLGC
 	Citation     CitationRecords   // INDI.ASSO.SOUR
 	Note         NoteRecords       // FAM.HUSB.NOTE or FAM.WIFE.NOTE or FAM.CHILD.NOTE
+	Age          string            // ..EVEN.HUSB.AGE or ..EVEN.WIFE.AGE or ..EVEN.SPOU.AGE
 }
 
 // IndividualLinks represents a slice of links to individual records
