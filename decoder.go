@@ -42,8 +42,8 @@ func (d *Decoder) Decode() (*RootRecord, error) {
 		Note:             make(NoteRecords, 0),
 		EventDefinition_: make(EventDefinitionRecords, 0),
 		ChildStatus:      make(ChildStatusRecords, 0),
-		Submission:       make([]*SubmissionRecord, 0),
-		Submitter:        make([]*SubmitterRecord, 0),
+		Submission:       make(SubmissionRecords, 0),
+		Submitter:        make(SubmitterRecords, 0),
 	}
 
 	d.refs = make(map[string]interface{})
@@ -335,7 +335,11 @@ func makeAddressParser(d *Decoder, r *AddressRecord, minLevel int) parser {
 		switch tag {
 
 		case "CONT":
-			r.Full = r.Full + "\n" + value
+			if r.Full == "" {
+				r.Full = value
+			} else {
+				r.Full = r.Full + "\n" + value
+			}
 
 		case "CONC":
 			r.Full = r.Full + value
@@ -445,6 +449,7 @@ func makeBusinessParser(d *Decoder, r *BusinessRecord, minLevel int) parser {
 	}
 }
 
+// makeCallNumberParser parses a CallNumberRecord
 func makeCallNumberParser(d *Decoder, r *CallNumberRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -463,6 +468,7 @@ func makeCallNumberParser(d *Decoder, r *CallNumberRecord, minLevel int) parser 
 	}
 }
 
+// makeChangeParser parses a ChangeRecord
 func makeChangeParser(d *Decoder, r *ChangeRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -532,7 +538,11 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 		switch tag {
 
 		case "CONT":
-			r.Value = r.Value + "\n" + value
+			if r.Value == "" {
+				r.Value = value
+			} else {
+				r.Value = r.Value + "\n" + value
+			}
 
 		case "CONC":
 			r.Value = r.Value + value
@@ -742,19 +752,19 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 			husband := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: husband}
 			r.Husband = rec
+			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
 		case "WIFE":
 			wife := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: wife}
 			r.Wife = rec
+			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
 		case "SPOU":
 			spouse := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: spouse}
 			r.Spouse = rec
-
-		case "AGE":
-			r.Age = value
+			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
 		case "AGNC":
 			r.Agency = value
@@ -860,11 +870,13 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 			husband := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: husband}
 			r.Husband = rec
+			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
 		case "WIFE":
 			wife := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: wife}
 			r.Wife = rec
+			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
 		case "NCHI":
 			pint, err := strconv.ParseInt(value, 10, 64)
@@ -1000,9 +1012,6 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 			r.Date = rec
 			d.pushParser(makeDateParser(d, rec, level))
 
-		case "TIME":
-			r.Time = value
-
 		case "GEDC":
 			rec := &GedcomRecord{Level: level}
 			r.Gedcom = rec
@@ -1074,7 +1083,11 @@ func makeHistoryParser(d *Decoder, r *HistoryRecord, minLevel int) parser {
 		switch tag {
 
 		case "CONT":
-			r.History = r.History + "\n" + value
+			if r.History == "" {
+				r.History = value
+			} else {
+				r.History = r.History + "\n" + value
+			}
 
 		case "CONC":
 			r.History = r.History + value
@@ -1118,6 +1131,9 @@ func makeIndividualLinkParser(d *Decoder, r *IndividualLink, minLevel int) parse
 			rec := &NoteRecord{Level: level, Note: value}
 			r.Note = append(r.Note, rec)
 			d.pushParser(makeNoteParser(d, rec, level))
+
+		case "AGE":
+			r.Age = value
 
 		default:
 			log.Printf("unhandled Individual Link tag: %d %s %s\n", level, tag, value)
@@ -1467,7 +1483,11 @@ func makeNoteParser(d *Decoder, r *NoteRecord, minLevel int) parser {
 		switch tag {
 
 		case "CONT":
-			r.Note = r.Note + "\n" + value
+			if r.Note == "" {
+				r.Note = value
+			} else {
+				r.Note = r.Note + "\n" + value
+			}
 
 		case "CONC":
 			r.Note = r.Note + value
@@ -1722,11 +1742,6 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 				r.ChildStatus = append(r.ChildStatus, rec)
 				d.pushParser(makeChildStatusParser(d, rec, level))
 
-			case "HEAD":
-				rec := d.header(xref)
-				r.Header = rec
-				d.pushParser(makeHeaderParser(d, rec, level))
-
 			case "SUBM":
 				rec := d.submitter(xref)
 				r.Submitter = append(r.Submitter, rec)
@@ -1736,6 +1751,11 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 				rec := d.submission(xref)
 				r.Submission = append(r.Submission, rec)
 				d.pushParser(makeSubmissionParser(d, rec, level))
+
+			case "HEAD":
+				rec := d.header(xref)
+				r.Header = rec
+				d.pushParser(makeHeaderParser(d, rec, level))
 
 			case "TRLR":
 				rec := d.trailer(xref)
@@ -1800,7 +1820,11 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 		switch tag {
 
 		case "CONT":
-			r.Value = r.Value + "\n" + value
+			if r.Value == "" {
+				r.Value = value
+			} else {
+				r.Value = r.Value + "\n" + value
+			}
 
 		case "CONC":
 			r.Value = r.Value + value
@@ -2076,7 +2100,11 @@ func makeTextParser(d *Decoder, s *string, minLevel int) parser {
 		switch tag {
 
 		case "CONT":
-			*s = *s + "\n" + value
+			if *s == "" {
+				*s = value
+			} else {
+				*s = *s + "\n" + value
+			}
 
 		case "CONC":
 			*s = *s + value
