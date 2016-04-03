@@ -167,7 +167,7 @@ func (r *BusinessRecord) String() string {
 	}
 
 	if r.WebSite != "" {
-		s = fmt.Sprintf("%s%d WWW %s", indent(r.Level), r.Level, r.WebSite)
+		s = fmt.Sprintf("%s%d WWW %s", indent(r.Level+1), r.Level+1, r.WebSite)
 		ss = append(ss, s)
 	}
 
@@ -466,7 +466,11 @@ func (r *EventRecord) String() string {
 	if r.Xref != "" {
 		id = fmt.Sprintf("@%s@ ", r.Xref)
 	}
-	s = fmt.Sprintf("%s%d %s%s %s", indent(r.Level), r.Level, id, r.Tag, r.Value)
+	spacer := " "
+	if r.Value == "" {
+		spacer = ""
+	}
+	s = fmt.Sprintf("%s%d %s%s%s%s", indent(r.Level), r.Level, id, r.Tag, spacer, r.Value)
 	ss = append(ss, s)
 
 	if r.Type != "" {
@@ -527,11 +531,6 @@ func (r *EventRecord) String() string {
 
 	if r.Spouse != nil {
 		s = r.Spouse.String()
-		ss = append(ss, s)
-	}
-
-	if r.Age != "" {
-		s = fmt.Sprintf("%s%d AGE %s", indent(r.Level+1), r.Level+1, r.Age)
 		ss = append(ss, s)
 	}
 
@@ -799,11 +798,6 @@ func (r *HeaderRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Time != "" {
-		s = fmt.Sprintf("%s%d TIME %s", indent(r.Level+1), r.Level+1, r.Time)
-		ss = append(ss, s)
-	}
-
 	if r.FileName != "" {
 		s = fmt.Sprintf("%s%d FILE %s", indent(r.Level+1), r.Level+1, r.FileName)
 		ss = append(ss, s)
@@ -845,17 +839,13 @@ func (r *HeaderRecord) String() string {
 	}
 
 	if r.Submitter != nil {
-		for _, subm := range r.Submitter {
-			s = subm.String()
-			ss = append(ss, s)
-		}
+		s = r.Submitter.String()
+		ss = append(ss, s)
 	}
 
 	if r.Submission != nil {
-		for _, subn := range r.Submission {
-			s = subn.String()
-			ss = append(ss, s)
-		}
+		r.Submission.String()
+		ss = append(ss, s)
 	}
 
 	if r.Schema != nil {
@@ -900,7 +890,14 @@ func (r *IndividualLink) String() string {
 	var ss []string
 	var s string
 
-	s = fmt.Sprintf("%s%d %s @%s@", indent(r.Level), r.Level, r.Tag, r.Individual.Xref)
+	sXref := ""
+	if r.Individual != nil {
+		if r.Individual.Xref != "" {
+			sXref = fmt.Sprintf(" @%s@", r.Individual.Xref)
+		}
+	}
+
+	s = fmt.Sprintf("%s%d %s%s", indent(r.Level), r.Level, r.Tag, sXref)
 	ss = append(ss, s)
 
 	if r.Relationship != "" {
@@ -922,6 +919,11 @@ func (r *IndividualLink) String() string {
 
 	if r.Note != nil {
 		s = r.Note.String()
+		ss = append(ss, s)
+	}
+
+	if r.Age != "" {
+		s = fmt.Sprintf("%s%d AGE %s", indent(r.Level+1), r.Level+1, r.Age)
 		ss = append(ss, s)
 	}
 
@@ -1148,7 +1150,7 @@ func (r IndividualRecords) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("IndividualRecords type(r): %T\n", r)
+	// log.Printf("IndividualRecords type(r): %T\n", r)
 	for _, x := range r {
 		s = x.String()
 		ss = append(ss, s)
@@ -1162,7 +1164,7 @@ func (r *MediaLink) String() string {
 	var ss []string
 	var s string
 
-	log.Printf("\nMediaLink type(r): %T at %p\n%#v\n", r, r, r)
+	// log.Printf("\nMediaLink type(r): %T at %p\n%#v\n", r, r, r)
 	s = fmt.Sprintf("%s%d %s @%s@", indent(r.Level), r.Level, r.Tag, r.Media.Xref)
 	ss = append(ss, s)
 
@@ -1174,9 +1176,9 @@ func (r MediaLinks) String() string {
 	var ss []string
 	var s string
 
-	log.Printf("\nMediaLinks type(r): %T at %p\n%#v\n", r, r, r)
+	// log.Printf("\nMediaLinks type(r): %T at %p\n%#v\n", r, r, r)
 	for _, x := range r {
-		log.Printf("\nMediaLink type(x): %T at %p\n%#v\n", x, x, x)
+		// log.Printf("\nMediaLink type(x): %T at %p\n%#v\n", x, x, x)
 		if x.Value != "" {
 			s = x.String()
 		} else {
@@ -1193,7 +1195,7 @@ func (r *MediaRecord) String() string {
 	var ss []string
 	var s string
 
-	log.Printf("\nMediaRecord type(r): %T at %p\n%#v\n", r, r, r)
+	// log.Printf("\nMediaRecord type(r): %T at %p\n%#v\n", r, r, r)
 	id0, idN := "", ""
 	if r.Xref != "" {
 		id0 = fmt.Sprintf(" @%s@ ", r.Xref)
@@ -1309,9 +1311,9 @@ func (r MediaRecords) String() string {
 	var ss []string
 	var s string
 
-	log.Printf("\nMediaRecords type(r): %T at %p\n%#v\n", r, r, r)
+	// log.Printf("\nMediaRecords type(r): %T at %p\n%#v\n", r, r, r)
 	for _, x := range r {
-		log.Printf("\nMediaRecord type(x): %T at %p\n%#v\n", x, x, x)
+		// log.Printf("\nMediaRecord type(x): %T at %p\n%#v\n", x, x, x)
 		s = x.String()
 		ss = append(ss, s)
 	}
@@ -1406,7 +1408,7 @@ func (r NameRecords) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("NameRecords type(r): %T\n", r)
+	// log.Printf("NameRecords type(r): %T\n", r)
 	for _, x := range r {
 		s = x.String()
 		ss = append(ss, s)
@@ -1451,7 +1453,7 @@ func (r NoteRecords) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("NoteRecords type(r): %T\n", r)
+	// log.Printf("NoteRecords type(r): %T\n", r)
 	for _, x := range r {
 		s = x.String()
 		ss = append(ss, s)
@@ -1534,7 +1536,7 @@ func (r PlaceRecords) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("PlaceRecords type(r): %T\n", r)
+	// log.Printf("PlaceRecords type(r): %T\n", r)
 	for _, x := range r {
 		s = x.String()
 		ss = append(ss, s)
@@ -1561,6 +1563,18 @@ func (r *RepositoryLink) String() string {
 		ss = append(ss, s)
 	}
 
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of links to repository records
+func (r RepositoryLinks) String() string {
+	var ss []string
+	var s string
+
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
 	return strings.Join(ss, "\n")
 }
 
@@ -1617,16 +1631,34 @@ func (r *RepositoryRecord) String() string {
 	return strings.Join(ss, "\n")
 }
 
+// String stringifies a slice of repository records
+func (r RepositoryRecords) String() string {
+	var ss []string
+	var s string
+
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
+	return strings.Join(ss, "\n")
+}
+
 // String stringifies a GEDCOM role record
 func (r *RoleRecord) String() string {
 	var ss []string
 	var s string
 
-	spacer := " "
-	if r.Role == "" {
-		spacer = ""
+	spacer := ""
+	xref := ""
+	if r.Individual != nil {
+		if r.Individual.Xref != "" {
+			xref = fmt.Sprintf("@%s@", r.Individual.Xref)
+		}
 	}
-	s = fmt.Sprintf("%s%d ROLE %s%s@%s@", indent(r.Level), r.Level, r.Role, spacer, r.Individual.Xref)
+	if r.Role != "" && xref != "" {
+		spacer = " "
+	}
+	s = fmt.Sprintf("%s%d ROLE %s%s%s", indent(r.Level), r.Level, r.Role, spacer, xref)
 	ss = append(ss, s)
 
 	if r.Principal != "" {
@@ -1642,7 +1674,7 @@ func (r RoleRecords) String() string {
 	var ss []string
 	var s string
 
-	//log.Printf("RoleRecords type(r): %T\n", r)
+	// log.Printf("RoleRecords type(r): %T\n", r)
 	for _, x := range r {
 		s = x.String()
 		ss = append(ss, s)
@@ -1661,85 +1693,67 @@ func (r *RootRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Submission != nil {
-		for _, subn := range r.Submission {
-			s = subn.String()
-			ss = append(ss, s)
-		}
+	if len(r.Submission) > 0 {
+		s = r.Submission.String()
+		ss = append(ss, s)
 	}
 
-	if r.Submitter != nil {
-		for _, subm := range r.Submitter {
-			s = subm.String()
-			ss = append(ss, s)
-		}
+	if len(r.Submitter) > 0 {
+		s = r.Submitter.String()
+		ss = append(ss, s)
 	}
 
-	if r.Place != nil {
-		for _, x := range r.Place {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Place) > 0 {
+		s = r.Place.String()
+		ss = append(ss, s)
 	}
 
-	if r.Event != nil {
-		for _, x := range r.Event {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Event) > 0 {
+		s = r.Event.String()
+		ss = append(ss, s)
 	}
 
-	if r.Individual != nil {
-		for _, x := range r.Individual {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Individual) > 0 {
+		s = r.Individual.String()
+		ss = append(ss, s)
 	}
 
-	if r.Family != nil {
-		for _, x := range r.Family {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Family) > 0 {
+		s = r.Family.String()
+		ss = append(ss, s)
 	}
 
-	if r.Repository != nil {
-		for _, x := range r.Repository {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Repository) > 0 {
+		s = r.Repository.String()
+		ss = append(ss, s)
 	}
 
-	if r.Source != nil {
-		for _, x := range r.Source {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Source) > 0 {
+		s = r.Source.String()
+		ss = append(ss, s)
 	}
 
-	if r.Note != nil {
-		for _, x := range r.Note {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.Note) > 0 {
+		s = r.Note.String()
+		ss = append(ss, s)
 	}
 
-	if r.Media != nil {
+	if len(r.Media) > 0 {
 		s = r.Media.String()
 		ss = append(ss, s)
 	}
 
-	if r.ChildStatus != nil {
-		for _, x := range r.ChildStatus {
-			s = x.String()
-			ss = append(ss, s)
-		}
+	if len(r.ChildStatus) > 0 {
+		s = r.ChildStatus.String()
+		ss = append(ss, s)
 	}
 
 	if r.Trailer != nil {
 		s = r.Trailer.String()
 		ss = append(ss, s)
 	}
+
+	ss = append(ss, "")
 
 	return strings.Join(ss, "\n")
 }
@@ -1902,6 +1916,18 @@ func (r *SubmissionLink) String() string {
 	return strings.Join(ss, "\n")
 }
 
+// String stringifies a slice of links to submission records
+func (r SubmissionLinks) String() string {
+	var ss []string
+	var s string
+
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
+	return strings.Join(ss, "\n")
+}
+
 // String stringifies a GEDCOM level 0 submission record
 func (r *SubmissionRecord) String() string {
 	var ss []string
@@ -1943,15 +1969,40 @@ func (r *SubmissionRecord) String() string {
 	return strings.Join(ss, "\n")
 }
 
-// String stringifies a GEDCOM link to a submitter record
-func (r *SubmitterLink) String() string {
-
+// String stringifies a slice of  submission records
+func (r SubmissionRecords) String() string {
 	var ss []string
 	var s string
 
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM link to a submitter record
+func (r *SubmitterLink) String() string {
+	var ss []string
+	var s string
+
+	//log.Printf("SubmitterLink type(r): %T\n%#v\n", r, r)
 	s = fmt.Sprintf("%s%d %s @%s@", indent(r.Level), r.Level, r.Tag, r.Submitter.Xref)
 	ss = append(ss, s)
 
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of links to submitter records
+func (r SubmitterLinks) String() string {
+	var ss []string
+	var s string
+
+	//log.Printf("SubmitterLinks type(r): %T\n%#v\n", r, r)
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
 	return strings.Join(ss, "\n")
 }
 
@@ -1960,6 +2011,7 @@ func (r *SubmitterRecord) String() string {
 	var ss []string
 	var s, sXref0, sXrefn string
 
+	//log.Printf("SubmitterRecord type(r): %T\n%#v\n", r, r)
 	if r.Level == 0 {
 		sXrefn, sXref0 = "", fmt.Sprintf("@%s@ ", r.Xref)
 	} else {
@@ -2043,10 +2095,12 @@ func (r SubmitterRecords) String() string {
 	var ss []string
 	var s string
 
+	//log.Printf("SubmitterRecords type(r): %T\n%#v\n", r, r)
 	for _, x := range r {
 		s = x.String()
 		ss = append(ss, s)
 	}
+
 	return strings.Join(ss, "\n")
 }
 
@@ -2083,7 +2137,11 @@ func (r *SystemRecord) String() string {
 
 // String stringifies a GEDCOM level 0 trailer record
 func (r *TrailerRecord) String() string {
-	return fmt.Sprintf("%s%d TRLR\n", indent(0), 0)
+	var s string
+
+	s = fmt.Sprintf("0 TRLR")
+
+	return s
 }
 
 // String stringifies a GEDCOM user reference number record
@@ -2098,6 +2156,7 @@ func (r *UserReferenceNumberRecord) String() string {
 		s = fmt.Sprintf("%s%d TYPE %s", indent(r.Level+1), r.Level+1, r.Type)
 		ss = append(ss, s)
 	}
+
 	return strings.Join(ss, "\n")
 }
 
