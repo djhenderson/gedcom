@@ -40,6 +40,7 @@ func (d *Decoder) Decode() (*RootRecord, error) {
 		Source:           make(SourceRecords, 0),
 		Media:            make(MediaLinks, 0),
 		Note:             make(NoteRecords, 0),
+		PlaceDefinition_: make(PlaceDefinitionRecords, 0),
 		EventDefinition_: make(EventDefinitionRecords, 0),
 		ChildStatus:      make(ChildStatusRecords, 0),
 		Submission:       make(SubmissionRecords, 0),
@@ -144,6 +145,21 @@ func (d *Decoder) event(xref string) *EventRecord {
 	return ref
 }
 
+// placeDefinition finds or creates a level 0 PlaceDefinitionRecord
+func (d *Decoder) placeDefinition(xref string) *PlaceDefinitionRecord {
+	if xref == "" {
+		return &PlaceDefinitionRecord{}
+	}
+
+	ref, found := d.refs[xref].(*PlaceDefinitionRecord)
+	if !found {
+		rec := &PlaceDefinitionRecord{Xref: xref}
+		d.refs[rec.Xref] = rec
+		return rec
+	}
+	return ref
+}
+
 // eventDefinition finds or creates a level 0 EventDefinitionRecord
 func (d *Decoder) eventDefinition(xref string) *EventDefinitionRecord {
 	if xref == "" {
@@ -237,12 +253,12 @@ func (d *Decoder) note(xref string) *NoteRecord {
 // place finds or creates a level 0 PlaceRecord
 func (d *Decoder) place(xref string) *PlaceRecord {
 	if xref == "" {
-		return &PlaceRecord{}
+		return &PlaceRecord{Tag: "PLAC"}
 	}
 
 	ref, found := d.refs[xref].(*PlaceRecord)
 	if !found {
-		rec := &PlaceRecord{Xref: xref}
+		rec := &PlaceRecord{Xref: xref, Tag: "PLAC"}
 		d.refs[rec.Xref] = rec
 		return rec
 	}
@@ -326,7 +342,7 @@ func (d *Decoder) trailer(xref string) *TrailerRecord {
 
 // Record parser factories
 
-// makeAddressParser parses an AddressRecord
+// makeAddressParser returns a parser for an AddressRecord
 func makeAddressParser(d *Decoder, r *AddressRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -368,8 +384,44 @@ func makeAddressParser(d *Decoder, r *AddressRecord, minLevel int) parser {
 		case "PHON":
 			r.Phone = value
 
+		case "_NAME": // AQ14
+			r.Name_ = value
+
+		case "NOTE": // Leg8
+			rec := &NoteRecord{Level: level, Note: value}
+			r.Note = append(r.Note, rec)
+			d.pushParser(makeNoteParser(d, rec, level))
+
 		default:
 			log.Printf("unhandled Address tag: %d %s %s\n", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+func makeAuthorParser(d *Decoder, r *AuthorRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "CONT":
+			if r.Author == "" {
+				r.Author = value
+			} else {
+				r.Author = r.Author + "\n" + value
+			}
+
+		case "CONC":
+			r.Author = r.Author + value
+
+		case "ABBR":
+			r.Abbreviation = value
+
+		default:
+			log.Printf("unhandled Author tag: %d %s %s\n", level, tag, value)
 		}
 
 		return nil
@@ -477,7 +529,7 @@ func makeChangeParser(d *Decoder, r *ChangeRecord, minLevel int) parser {
 		switch tag {
 
 		case "DATE":
-			rec := &DateRecord{Level: level, Date: value}
+			rec := &DateRecord{Level: level, Tag: tag, Date: value}
 			r.Date = rec
 			d.pushParser(makeDateParser(d, rec, level))
 
@@ -553,6 +605,9 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 		case "REF":
 			r.Reference = value
 
+		case "_FSFTID": // AQ14
+			r.FamilySearchFTID_ = value
+
 		case "QUAY":
 			r.Quality = value
 
@@ -596,6 +651,15 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 		case "TEXT":
 			r.Text = append(r.Text, value)
 			d.pushParser(makeTextParser(d, &r.Text[len(r.Text)-1], level))
+
+		case "_RIN": // AQ14
+			r.Rin_ = value
+
+		case "DATE":
+			r.Date = value
+
+		case "_SUBQ", "_BIBL", "_TMPLT", "TID", "FIELD", "NAME", "VALUE": // RM6
+			// TODO
 
 		default:
 			log.Printf("unhandled Citation tag: %d %s %s\n", level, tag, value)
@@ -687,10 +751,16 @@ func makeEventDefinitionParser(d *Decoder, r *EventDefinitionRecord, minLevel in
 		}
 		switch tag {
 
-		case "TYPE", "TITL", "ABBR",
+		case "TYPE", "TITL", "ABBR", "ROLE",
+			"PLAC", "DATE", "DESC",
+			"SENT", "CONT", "CONC",
+			"_RIN", "_SENT",
 			"_SENM", "_SENDOM", "_SENPOM", "_SENDPM",
 			"_SENF", "_SENDOF", "_SENPOF", "_SENDPF",
 			"_SENU", "_SENDOU", "_SENPOU", "_SENDPU",
+			"_SEN1", "_SEN2", "_SEN3", "_SEN4",
+			"_SEN5", "_SEN6", "_SEN7", "_SEN8",
+			"_INC_NOTES", "_DEF", "_PP_EXCLUDE",
 			"_DATE_TYPE", "_PLACE_TYPE", "_DESC_FLAG", "_CONF_FLAG":
 			// TODO
 
@@ -718,15 +788,34 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 		case "_PRIM":
 			r.Primary_ = value
 
+		case "_ALT_BIRTH": // AQ14
+			r.AlternateBirth_ = value
+
+		case "_CONFIDENTIAL": // AQ14
+			r.Confidential_ = value
+
 		case "DATE":
-			rec := &DateRecord{Level: level, Date: value}
+			rec := &DateRecord{Level: level, Tag: tag, Date: value}
 			r.Date = rec
 			d.pushParser(makeDateParser(d, rec, level))
 
+		case "_DATE2": // AQ14
+			rec := &DateRecord{Level: level, Tag: tag, Date: value}
+			r.Date2_ = rec
+			d.pushParser(makeDateParser(d, rec, level))
+
 		case "PLAC":
-			rec := &PlaceRecord{Level: level, Name: value}
+			rec := &PlaceRecord{Level: level, Tag: tag, Name: value}
 			r.Place = rec
 			d.pushParser(makePlaceParser(d, rec, level))
+
+		case "_PLAC2": // AQ14
+			rec := &PlaceRecord{Level: level, Tag: tag, Name: value}
+			r.Place2_ = rec
+			d.pushParser(makePlaceParser(d, rec, level))
+
+		case "_Description2": // AQ14
+			r.Description2_ = value
 
 		case "ROLE": // This is a kind of IndividualLink
 			indi := d.individual(stripXref(value))
@@ -866,6 +955,12 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 		}
 		switch tag {
 
+		case "_STAT": // AQ14
+			r.Status_ = value
+
+		case "_NONE": // AQ14
+			r.NoChildren_ = value
+
 		case "HUSB":
 			husband := d.individual(stripXref(value))
 			rec := &IndividualLink{Level: level, Tag: tag, Individual: husband}
@@ -892,7 +987,7 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
 		case "ANUL", "CENS", "DIV", "DIVF", "ENGA", "EVEN", "MARR", "MARB",
-			"MARC", "MARL", "MARS", "SLGC", "SLGS":
+			"MARC", "MARL", "MARS", "RESI", "SLGC", "SLGS":
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
@@ -1008,7 +1103,7 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 			r.Destination = value
 
 		case "DATE":
-			rec := &DateRecord{Level: level, Date: value}
+			rec := &DateRecord{Level: level, Tag: tag, Date: value}
 			r.Date = rec
 			d.pushParser(makeDateParser(d, rec, level))
 
@@ -1032,7 +1127,7 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 			r.Copyright = value
 
 		case "PLAC":
-			rec := &PlaceRecord{Level: level, Name: value}
+			rec := &PlaceRecord{Level: level, Tag: tag, Name: value}
 			r.Place = rec
 			d.pushParser(makePlaceParser(d, rec, level))
 
@@ -1135,6 +1230,9 @@ func makeIndividualLinkParser(d *Decoder, r *IndividualLink, minLevel int) parse
 		case "AGE":
 			r.Age = value
 
+		case "_PREF": // Leg8
+			r.Preferred_ = value
+
 		default:
 			log.Printf("unhandled Individual Link tag: %d %s %s\n", level, tag, value)
 		}
@@ -1154,6 +1252,9 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			rec := &NameRecord{Level: level, Name: value}
 			r.Name = append(r.Name, rec)
 			d.pushParser(makeNameParser(d, rec, level))
+
+		case "_STAT": // AQ14
+			r.Status_ = value
 
 		case "RESN":
 			r.Restriction = value
@@ -1223,6 +1324,12 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			r.UserReferenceNumber = append(r.UserReferenceNumber, rec)
 			d.pushParser(makeUserReferenceNumberParser(d, rec, level))
 
+		case "_FSFTID": // AQ14
+			r.FamilySearchFTID_ = value
+
+		case "_FSLINK": // Leg8
+			r.FamilySearchLink_ = value
+
 		case "_UID":
 			r.UID_ = append(r.UID_, value)
 
@@ -1231,6 +1338,12 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 
 		case "EMAIL":
 			r.Email = value
+
+		case "_EMAIL": // AQ14
+			r.Email_ = value
+
+		case "_URL": // AQ14
+			r.URL_ = value
 
 		case "WWW":
 			r.WebSite = value
@@ -1312,6 +1425,9 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			rec := &MediaLink{Level: level, Tag: tag, Media: media}
 			r.ProfilePicture_ = rec
 			d.pushParser(makeMediaLinkParser(d, rec, level))
+
+		case "_PPEXCLUDE": // Leg8
+			r.PPExclude_ = value
 
 		default:
 			log.Printf("unhandled Individual tag: %d %s %s\n", level, tag, value)
@@ -1408,6 +1524,18 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 			r.Change = rec
 			d.pushParser(makeChangeParser(d, rec, level))
 
+		case "_SCBK": // AQ14
+			r.SCBK_ = value
+
+		case "_PRIM": // AQ14
+			r.Primary_ = value
+
+		case "_TYPE": // AQ14
+			r.Type_ = value
+
+		case "_SSHOW": // AQ14
+			r.SSHOW_ = value
+
 		default:
 			log.Printf("unhandled Media tag: %d %s %s\r", level, tag, value)
 		}
@@ -1443,6 +1571,12 @@ func makeNameParser(d *Decoder, r *NameRecord, minLevel int) parser {
 
 		case "_PGVN":
 			r.PreferedGivenName_ = value
+
+		case "ROMN":
+			r.RomanizedName = value
+
+		case "_MARNM": // AQ14
+			r.MarriedName_ = value
 
 		case "TYPE":
 			r.NameType = value
@@ -1513,6 +1647,27 @@ func makeNoteParser(d *Decoder, r *NoteRecord, minLevel int) parser {
 
 		default:
 			log.Printf("unhandled Note tag: %d %s %s\n", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+func makePlaceDefinitionParser(d *Decoder, r *PlaceDefinitionRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "PLAC":
+			r.Place = value
+
+		case "ABBR":
+			r.Abbreviation = value
+
+		default:
+			log.Printf("unhandled Place Definition tag: %d %s %s\n", level, tag, value)
 		}
 
 		return nil
@@ -1714,7 +1869,17 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 				r.Repository = append(r.Repository, rec)
 				d.pushParser(makeRepositoryParser(d, rec, level))
 
-			case "_EVENT_DEFN":
+			case "_PLAC_DEFN": // Leg8
+				rec := d.placeDefinition(xref)
+				r.PlaceDefinition_ = append(r.PlaceDefinition_, rec)
+				d.pushParser(makePlaceDefinitionParser(d, rec, level))
+
+			case "_EVENT_DEFN": // AQ14
+				rec := d.eventDefinition(xref)
+				r.EventDefinition_ = append(r.EventDefinition_, rec)
+				d.pushParser(makeEventDefinitionParser(d, rec, level))
+
+			case "_EVDEF": // RM6
 				rec := d.eventDefinition(xref)
 				r.EventDefinition_ = append(r.EventDefinition_, rec)
 				d.pushParser(makeEventDefinitionParser(d, rec, level))
@@ -1838,8 +2003,9 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			d.pushParser(makeTextParser(d, &r.Title, level))
 
 		case "AUTH":
-			r.Author = value
-			d.pushParser(makeTextParser(d, &r.Title, level))
+			rec := &AuthorRecord{Level: level, Author: value}
+			r.Author = rec
+			d.pushParser(makeAuthorParser(d, rec, level))
 
 		case "ABBR":
 			r.Abbreviation = value
@@ -1849,8 +2015,23 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			r.Abbreviation = value
 			d.pushParser(makeTextParser(d, &r.Title, level))
 
+		case "MEDI":
+			r.MediaType = value
+
 		case "_PAREN":
 			r.Parenthesized_ = value
+
+		case "_TYPE":
+			r.Type_ = value
+
+		case "_OTHER":
+			r.Other_ = value
+
+		case "_MASTER":
+			r.Master_ = value
+
+		case "_ITALIC":
+			r.Italic_ = value
 
 		case "TEXT":
 			r.Text = append(r.Text, value)
@@ -1908,6 +2089,9 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			r.UserReferenceNumber = append(r.UserReferenceNumber, rec)
 			d.pushParser(makeUserReferenceNumberParser(d, rec, level))
 
+		case "QUAY":
+			r.Quality = value
+
 		case "RIN":
 			r.RIN = value
 
@@ -1915,6 +2099,14 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			rec := &ChangeRecord{Level: level}
 			r.Change = rec
 			d.pushParser(makeChangeParser(d, rec, level))
+
+		case "_WEBTAG": // RM6
+			rec := &WebTagRecord{Level: level, Value: value}
+			r.WebTag_ = rec
+			d.pushParser(makeWebTagParser(d, rec, level))
+
+		case "_SUBQ", "_BIBL", "_TMPLT", "TID", "FIELD", "VALUE": // RM6
+			// TODO
 
 		default:
 			log.Printf("unhandled Source tag: %d %s %s\n", level, tag, value)
@@ -2016,6 +2208,9 @@ func makeSubmitterParser(d *Decoder, r *SubmitterRecord, minLevel int) parser {
 
 		case "EMAIL":
 			r.Email = value
+
+		case "_EMAIL": // AQ14
+			r.Email_ = value
 
 		case "WWW":
 			r.WebSite = value
@@ -2129,6 +2324,38 @@ func makeUserReferenceNumberParser(d *Decoder, r *UserReferenceNumberRecord, min
 
 		default:
 			log.Printf("unhandled UserReferenceNumber tag: %d %s %s\n", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+// makeWebTagParser returns a parser for an WebTagRecord (RM6)
+func makeWebTagParser(d *Decoder, r *WebTagRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "CONT":
+			if r.Value == "" {
+				r.Value = value
+			} else {
+				r.Value = r.Value + "\n" + value
+			}
+
+		case "CONC":
+			r.Value = r.Value + value
+
+		case "NAME":
+			r.Name = value
+
+		case "URL":
+			r.URL = value
+
+		default:
+			log.Printf("unhandled WebTag tag: %d %s %s\n", level, tag, value)
 		}
 
 		return nil
