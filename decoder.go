@@ -2012,7 +2012,7 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			d.pushParser(makeTextParser(d, &r.Title, level))
 
 		case "PUBL":
-			r.Abbreviation = value
+			r.Publication = value
 			d.pushParser(makeTextParser(d, &r.Title, level))
 
 		case "MEDI":

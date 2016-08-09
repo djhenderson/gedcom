@@ -1943,7 +1943,7 @@ func (r *SourceRecord) Write(w io.Writer) (nbytes int, err error) {
 	}
 
 	if r.Publication != "" {
-		n, err = WriteLineNp1(w, r.Level, "PUBL", r.Publication)
+		n, err = LongWrite(w, r.Level+1, "", "PUBL", r.Publication)
 		nbytes += n
 	}
 

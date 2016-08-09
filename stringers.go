@@ -1966,8 +1966,8 @@ func (r *SourceRecord) String() string {
 	}
 
 	if r.Publication != "" {
-		s = fmt.Sprintf("%s%d PUBL %s", indent(r.Level+1), r.Level+1, r.Publication)
-		ss = append(ss, s)
+		sas := LongString(r.Level+1, "", "PUBL", r.Publication)
+		ss = append(ss, sas...)
 	}
 
 	if r.MediaType != "" { // Leg8

@@ -24,3 +24,6 @@ _testmain.go
 *.test
 *.prof
 reg_expr.txt
+cover.out
+log.txt
+
