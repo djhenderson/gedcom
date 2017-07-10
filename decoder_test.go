@@ -122,7 +122,7 @@ func TestIndiName2(t *testing.T) {
 	name1 := &NameRecord{
 		Level: 1,
 		Name:  "given name /surname/jr.",
-		Citation: []*CitationRecord{
+		Citation: CitationRecords{
 			&CitationRecord{
 				Level: 2,
 				Source: &SourceRecord{
@@ -131,7 +131,7 @@ func TestIndiName2(t *testing.T) {
 
 				Page:    "42",
 				Quality: "0",
-				Data: []*DataRecord{
+				Data: DataRecords{
 					&DataRecord{
 						Level: 3,
 						Date:  "BEF 1 JAN 1900",
@@ -140,7 +140,7 @@ func TestIndiName2(t *testing.T) {
 						},
 					},
 				},
-				Note: []*NoteRecord{
+				Note: NoteRecords{
 					&NoteRecord{
 						Level: 3,
 						Note:  "A note\nNote continued here. The word TEST should not be broken!",
@@ -148,7 +148,7 @@ func TestIndiName2(t *testing.T) {
 				},
 			},
 		},
-		Note: []*NoteRecord{
+		Note: NoteRecords{
 			&NoteRecord{
 				Level: 2,
 				Note:  "Personal Name note\nNote continued here. The word TEST should not be broken!",
@@ -159,6 +159,8 @@ func TestIndiName2(t *testing.T) {
 	if !reflect.DeepEqual(i1.Name[0], name1) {
 		t.Errorf("Individual 0 name 0 was: %q\nExpected: %q\n",
 			spew.Sdump(i1.Name[0]), spew.Sdump(name1))
+		//t.Errorf("Individual 0 name 0 \n%s:\n%v\n%s:\n%v\n",
+		//	"was", i1.Name[0], "Expected", name1)
 	}
 }
 

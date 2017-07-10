@@ -24,7 +24,7 @@ type AddressRecord struct {
 // AddressRecords represents a slice of address records
 type AddressRecords []*AddressRecord
 
-// AuthRecord represents a data record
+// AuthorRecord represents a data record
 type AuthorRecord struct {
 	Level        int    // ..AUTH level
 	Author       string // value of ..AUTH
@@ -92,7 +92,7 @@ type CitationRecord struct {
 	Page              string        // ..SOUR.PAGE
 	Reference         string        // ..SOUR.REF
 	FamilySearchFTID_ string        // ..SOUR._FSFTID (AQ14)
-	Event             EventRecords  // .. SOUR.EVEN
+	Event             EventRecords  // ..SOUR.EVEN
 	Data              DataRecords   // ..SOUR.DATA
 	Text              []string      // ..SOUR.TEXT
 	Quality           string        // ..SOUR.QUAY
@@ -101,8 +101,10 @@ type CitationRecord struct {
 	Direct            string        // ..SOUR.DIRE
 	SourceQuality     string        // ..SOUR.SOQU
 	Note              NoteRecords   // ..SOUR.NOTE
-	Rin_              string        // ..SOUR._RIN (AQ14)
 	Date              string        // ..SOUR.DATE (Leg8)
+	ReferenceNumber   string        // ..SOUR.REFN
+	Rin_              string        // ..SOUR._RIN (AQ14)
+	AppliesTo_        string        // ..SOUR._APPLIES_TO (AQ15)
 }
 
 // CitationRecords represents a slice of links to source records
@@ -172,8 +174,8 @@ type EventRecord struct {
 	Temple          string          // ..EVEN.TEMP
 	Quality         string          // ..EVEN.QUAY
 	Status          string          // ..EVEN.STAT
-	UID_            []string        // ..EVEN._UID
-	RIN             string          // ..EVEN.RIN
+	UniqueId_       []string        // ..EVEN._UID
+	RecordInternal  string          // ..EVEN.RecordInternal
 	Email           string          // ..EVEN.EMAIL
 	Media           MediaLinks      // ..EVEN.OBJE
 	Citation        CitationRecords // ..EVEN.SOUR
@@ -189,13 +191,14 @@ type EventRecords []*EventRecord
 
 // FamilyLink represents a GEDCOM link to a family record.
 type FamilyLink struct {
-	Level    int           //  level
-	Tag      string        // tag from INDI.FAMC or INDI.FAMS or EVEN.FAMC
-	Family   *FamilyRecord // target of INDI.FAMC or INDI.FAMS or EVEN.FAMC
-	Pedigree string        // INDI.FAMC.PEDI or ...
-	Adopted  string        // INDI.FAMC.ADOP or ...
-	Primary_ string        // INDI.FAMC._PRIMARY or ...
-	Note     NoteRecords   // INDI.FAMC.NOTE or ..
+	Level    int             //  level
+	Tag      string          // tag from INDI.FAMC or INDI.FAMS or EVEN.FAMC
+	Family   *FamilyRecord   // target of INDI.FAMC or INDI.FAMS or EVEN.FAMC
+	Adopted  string          // INDI.FAMC.ADOP or ...
+	Primary_ string          // INDI.FAMC._PRIMARY or ...
+	Note     NoteRecords     // INDI.FAMC.NOTE or ..
+	Pedigree *PedigreeRecord // INDI.FAMC.PEDI or ..
+	Citation CitationRecords // INDI.FAMC.SOUR or ..
 }
 
 // FamilyLinks represents a slice of links to family records.
@@ -212,8 +215,8 @@ type FamilyRecord struct {
 	NumChildren         int                        // FAM.NCHI
 	Child               IndividualLinks            // FAM.CHIL
 	Event               EventRecords               // FAM.MARR, FAM.EVEN
-	UID_                []string                   // FAM._UID
-	RIN                 string                     // FAM.RIN
+	UniqueId_           []string                   // FAM._UID
+	RecordInternal      string                     // FAM.RecordInternal
 	UserReferenceNumber UserReferenceNumberRecords // FAM.REFN
 	Media               MediaLinks                 // FAM.OBJE
 	Citation            CitationRecords            // FAM.SOUR
@@ -313,8 +316,8 @@ type IndividualRecord struct {
 	UserReferenceNumber UserReferenceNumberRecords // INDI.REFN
 	FamilySearchFTID_   string                     // INDI._FSFTID (AQ14)
 	FamilySearchLink_   string                     // INDI._FSLINK (Leg8)
-	RIN                 string                     // INDI.RIN
-	UID_                []string                   // INDI._UID
+	RecordInternal      string                     // INDI.RecordInternal
+	UniqueId_           []string                   // INDI._UID
 	Email               string                     // INDI.EMAIL
 	Email_              string                     // INDI._EMAIL (AQ14)
 	URL_                string                     // INDI._URL (AQ14)
@@ -325,7 +328,6 @@ type IndividualRecord struct {
 	Submitter           SubmitterLinks             // INDI.SUBM
 	ANCI                SubmitterLinks             // INDI.ANCI
 	DESI                SubmitterLinks             // INDI.DESI
-	Change              *ChangeRecord              // INDI.CHAN
 	UpdateTime_         string                     // INDI._UPD
 	Alias               string                     // INDI.ALIA
 	Father              *IndividualLink            // INDI.FATH
@@ -333,6 +335,8 @@ type IndividualRecord struct {
 	Miscellaneous       []string                   // INDI.MISC
 	ProfilePicture_     *MediaLink                 // INDI._PROF
 	PPExclude_          string                     // INDI._PPEXCLUDE (Leg8)
+	Change              *ChangeRecord              // INDI.CHAN
+	Todo_               string                     // INDI._TODO (AQ15)
 }
 
 // IndividualRecords represents a slice of individual records
@@ -356,7 +360,7 @@ type MediaRecord struct {
 	Tag                 string                     // ..TAG tag either OBJE or _PROF
 	Value               string                     // value without xref
 	Format              string                     // OBJE.FORM
-	URL_                string                     // OBJE._URL
+	Url_                string                     // OBJE._URL
 	FileName            string                     // OBJE.FILE
 	Title               string                     // OBJE.TITL
 	Date                string                     // OBJE.DATE
@@ -372,12 +376,17 @@ type MediaRecord struct {
 	AstUpPid_           string                     // OBJE._ASTUPPID - FmP update identifier?
 	BinaryLargeObject   *BlobRecord                // OBJE.BLOB
 	UserReferenceNumber UserReferenceNumberRecords // OBJE.REFN
-	RIN                 string                     // OBJE.RIN
+	Rin                 string                     // OBJE.RecordInternal
 	Change              *ChangeRecord              // OBJE.CHAN
-	SCBK_               string                     // OBJE._SCBK (AQ14)
+	Scbk_               string                     // OBJE._SCBK (AQ14)
 	Primary_            string                     // OBJE._PRIM (AQ14)
 	Type_               string                     // OBJE._TYPE (AQ14)
-	SSHOW_              string                     // OBJE._SSHOW (AQ14)
+	Sshow_              string                     // OBJE._SSHOW (AQ14)
+	Stime_              string                     // OBJE._STIME (AQ15)
+	mediaLinks          MediaLinks                 // OBJE.OBJE (AQ15)
+	SrcPp_              string                     // OBJE._SRCPP (AQ15)
+	SrcFlip_            string                     // OBJE._SRCFLIP (AQ15)
+	FsFtId_             string                     // OBJE._FSFTID (AQ15)
 }
 
 // MediaRecords represents a slice of media records
@@ -395,10 +404,11 @@ type NameRecord struct {
 	Suffix             string          // ..NAME.NSFX
 	PreferedGivenName_ string          // ..NAME._PGVN
 	RomanizedName      string          // ..NAME.ROMN
+	PhoneticName       string          // ..NAME.FONE
 	MarriedName_       string          // ..NAME._MARNM (AQ14)
 	Primary_           string          // ..NAME._PRIM - FmP primary/preferred
 	NameType           string          // ..NAME.TYPE
-	AKA_               []string        // ..NAME._AKA
+	AlsoKnownAs_       []string        // ..NAME._AKA
 	Nickname           []string        // ..NAME.NICK
 	Citation           CitationRecords // ..NAME.SOUR
 	Note               NoteRecords     // ..NAME.NOTE
@@ -414,16 +424,24 @@ type NoteRecord struct {
 	Note                string                     // ..NOTE value
 	Citation            CitationRecords            // ..NOTE.SOUR
 	UserReferenceNumber UserReferenceNumberRecords // ..NOTE.REFN
-	RIN                 string                     // ..NOTE.RIN
+	RecordInternal      string                     // ..NOTE.RecordInternal
 	Change              *ChangeRecord              // ..SOUR.CHAN
 }
 
 // NoteRecords represents a slice of note records
 type NoteRecords []*NoteRecord
 
+// PedigreeRecord represents a GEDCOM pedigree record.
+type PedigreeRecord struct {
+	Level    int    // ..FAMC.PEDI level
+	Pedigree string // ..FAMC.PEDI value
+	Husband_ string // ..FAMC.PEDI._HUSB value
+	Wife_    string // ..FAMC.PEDI._WIFE value
+}
+
 // PlaceDefinitionRecord represents a GEDCOM place definition record.
 type PlaceDefinitionRecord struct {
-	Level        int    // Level 0 _EVENT_DEFN
+	Level        int    // Level 0 _PLAC_DEFN
 	Xref         string // Level 0 xref
 	Place        string // _PLAC_DEFN.PLAC
 	Abbreviation string // _PLAC_DEFN.ABBR
@@ -482,7 +500,7 @@ type RepositoryRecord struct {
 	Phone               []string                   // REPO.PHON
 	WebSite             string                     // REPO.WWW
 	UserReferenceNumber UserReferenceNumberRecords // REPO.REFN
-	RIN                 string                     // REPO.RIN
+	RecordInternal      string                     // REPO.RecordInternal
 	Note                NoteRecords                // REPO.NOTE
 	Change              *ChangeRecord              // REPO.CHAN
 }
@@ -511,13 +529,14 @@ type RootRecord struct {
 	Event            EventRecords           // EVEN
 	Individual       IndividualRecords      // INDI
 	Family           FamilyRecords          // FAM
-	Repository       RepositoryRecords      // REPO
-	Source           SourceRecords          // SOUR
-	Media            MediaLinks             // OBJE
+	Media            MediaRecords           // OBJE
 	Note             NoteRecords            // NOTE
 	PlaceDefinition_ PlaceDefinitionRecords // _PLAC_DEFN (Leg8)
 	EventDefinition_ EventDefinitionRecords // _EVENT_DEFN (AQ14)
 	ChildStatus      ChildStatusRecords     // CSTA
+	Todo_            TodoRecords            // _TODO (AQ15)
+	Source           SourceRecords          // SOUR
+	Repository       RepositoryRecords      // REPO
 	Trailer          *TrailerRecord         // TRLR
 }
 
@@ -554,7 +573,7 @@ type SourceRecord struct {
 	Repository          *RepositoryLink            // ..SOUR.REPO
 	UserReferenceNumber UserReferenceNumberRecords // ..SOUR.REFN
 	Quality             string                     // ..SOUR.QUAY
-	RIN                 string                     // ..SOUR.RIN
+	RecordInternal      string                     // ..SOUR.RecordInternal
 	ShortAuthor         string                     // ..SOUR.SHAU
 	ShortTitle          *ShortTitleRecord          // ..SOUR.SHTI
 	Media               MediaLinks                 // ..SOUR.OBJE
@@ -589,7 +608,7 @@ type SubmissionRecord struct {
 	Ancestors      string           // SUBN.ANCE
 	Descendents    string           // SUBN.DESC
 	Ordinance      string           // SUBN.ORDI
-	RIN            string           // SUBN.RIN
+	RecordInternal string           // SUBN.RecordInternal
 }
 
 // SubmissionRecords represents a slice of submission records
@@ -621,7 +640,7 @@ type SubmitterRecord struct {
 	RecordFileNumber string         // SUBM.RFN
 	STAL             string         // SUBM.STAL
 	NUMB             string         // SUBM.NUMB
-	RIN              string         // SUBM.RIN
+	RecordInternal   string         // SUBM.RecordInternal
 	Change           *ChangeRecord  // SUBM.CHAN
 }
 
@@ -637,6 +656,30 @@ type SystemRecord struct {
 	Business    *BusinessRecord // HEAD.SOUR.CORP
 	SourceData  *DataRecord     // HEAD.SOUR.DATA
 }
+
+// TodoLink represents a link to a todo record
+type TodoLink struct {
+	Level int    // .._TODO level
+	Xref  string // .._TODO value
+}
+
+// TodoLinks represents a slice of todo links
+type TodoLinks []*TodoLink
+
+// TodoRecord represents a todo record (AQ15)
+type TodoRecord struct {
+	Level       int    // _TODO level (equal 0)
+	Xref        string // xref_id of 0 level _TODO
+	Value       string // .._TODO value
+	Description string // .._TODO.DESC
+	Priority_   string // .._TODO._PRIORITY
+	Type        string // .._TODO.TYPE
+	Status      string // .._TODO.STAT
+	Date2_      string // .._TODO._DATE2
+}
+
+// TodoRecords represents a slice of todo records
+type TodoRecords []*TodoRecord
 
 // TrailerRecord represents a GEDCOM trailer record
 // There can be only one!

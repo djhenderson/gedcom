@@ -293,6 +293,11 @@ func (r *CitationRecord) String() string {
 	sas := LongString(r.Level, xref, "SOUR", r.Value)
 	ss = append(ss, sas...)
 
+	if r.ReferenceNumber != "" {
+		s = fmt.Sprintf("%s%d REFN %s", indent(r.Level+1), r.Level+1, r.ReferenceNumber)
+		ss = append(ss, s)
+	}
+
 	if r.Page != "" {
 		s = fmt.Sprintf("%s%d PAGE %s", indent(r.Level+1), r.Level+1, r.Page)
 		ss = append(ss, s)
@@ -359,13 +364,18 @@ func (r *CitationRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Rin_ != "" {
+	if r.Date != "" { // Leg8
+		s = fmt.Sprintf("%s%d DATE %s", indent(r.Level+1), r.Level+1, r.Date)
+		ss = append(ss, s)
+	}
+
+	if r.Rin_ != "" { // AQ14
 		s = fmt.Sprintf("%s%d _RIN %s", indent(r.Level+1), r.Level+1, r.Rin_)
 		ss = append(ss, s)
 	}
 
-	if r.Date != "" {
-		s = fmt.Sprintf("%s%d DATE %s", indent(r.Level+1), r.Level+1, r.Date)
+	if r.AppliesTo_ != "" { // AQ15
+		s = fmt.Sprintf("%s%d _APPLIES_TO %s", indent(r.Level+1), r.Level+1, r.AppliesTo_)
 		ss = append(ss, s)
 	}
 
@@ -640,8 +650,8 @@ func (r *EventRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.UID_ != nil {
-		for _, uid := range r.UID_ {
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
 			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
 			ss = append(ss, s)
 		}
@@ -677,11 +687,6 @@ func (r *FamilyLink) String() string {
 	s = fmt.Sprintf("%s%d %s @%s@", indent(r.Level), r.Level, r.Tag, r.Family.Xref)
 	ss = append(ss, s)
 
-	if r.Pedigree != "" {
-		s = fmt.Sprintf("%s%d PEDI %s", indent(r.Level+1), r.Level+1, r.Pedigree)
-		ss = append(ss, s)
-	}
-
 	if r.Adopted != "" {
 		s = fmt.Sprintf("%s%d ADOP %s", indent(r.Level+1), r.Level+1, r.Adopted)
 		ss = append(ss, s)
@@ -694,6 +699,16 @@ func (r *FamilyLink) String() string {
 
 	if r.Note != nil {
 		s = r.Note.String()
+		ss = append(ss, s)
+	}
+
+	if r.Pedigree != nil {
+		s = r.Pedigree.String()
+		ss = append(ss, s)
+	}
+
+	if r.Citation != nil {
+		s = r.Citation.String()
 		ss = append(ss, s)
 	}
 
@@ -747,8 +762,8 @@ func (r *FamilyRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -788,8 +803,8 @@ func (r *FamilyRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.UID_ != nil {
-		for _, uid := range r.UID_ {
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
 			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
 			ss = append(ss, s)
 		}
@@ -925,7 +940,7 @@ func (r *HeaderRecord) String() string {
 	}
 
 	if r.Submission != nil {
-		r.Submission.String()
+		s = r.Submission.String()
 		ss = append(ss, s)
 	}
 
@@ -1153,13 +1168,13 @@ func (r *IndividualRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
-	if r.UID_ != nil {
-		for _, uid := range r.UID_ {
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
 			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
 			ss = append(ss, s)
 		}
@@ -1226,11 +1241,6 @@ func (r *IndividualRecord) String() string {
 		}
 	}
 
-	if r.Change != nil {
-		s = r.Change.String()
-		ss = append(ss, s)
-	}
-
 	if r.Alias != "" {
 		s = fmt.Sprintf("%s%d ALIA %s", indent(r.Level+1), r.Level+1, r.Alias)
 		ss = append(ss, s)
@@ -1255,6 +1265,16 @@ func (r *IndividualRecord) String() string {
 
 	if r.PPExclude_ != "" { // Leg8
 		s = fmt.Sprintf("%s%d _PPEXCLUDE %s", indent(r.Level+1), r.Level+1, r.PPExclude_)
+		ss = append(ss, s)
+	}
+
+	if r.Change != nil {
+		s = r.Change.String()
+		ss = append(ss, s)
+	}
+
+	if r.Todo_ != "" { // AQ15
+		s = fmt.Sprintf("%s%d _TODO %s", indent(r.Level+1), r.Level+1, r.Todo_)
 		ss = append(ss, s)
 	}
 
@@ -1329,8 +1349,8 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.URL_ != "" {
-		s = fmt.Sprintf("%s%d _URL %s", indent(r.Level+1), r.Level+1, r.URL_)
+	if r.Url_ != "" {
+		s = fmt.Sprintf("%s%d _URL %s", indent(r.Level+1), r.Level+1, r.Url_)
 		ss = append(ss, s)
 	}
 
@@ -1404,8 +1424,8 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.Rin != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.Rin)
 		ss = append(ss, s)
 	}
 
@@ -1419,8 +1439,13 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.SCBK_ != "" { // AQ14
-		s = fmt.Sprintf("%s%d _SCBK %s", indent(r.Level+1), r.Level+1, r.SCBK_)
+	if r.FsFtId_ != "" { // AQ14
+		s = fmt.Sprintf("%s%d _FSFTID %s", indent(r.Level+1), r.Level+1, r.FsFtId_)
+		ss = append(ss, s)
+	}
+
+	if r.Scbk_ != "" { // AQ14
+		s = fmt.Sprintf("%s%d _SCBK %s", indent(r.Level+1), r.Level+1, r.Scbk_)
 		ss = append(ss, s)
 	}
 
@@ -1434,8 +1459,28 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.SSHOW_ != "" { // AQ14
-		s = fmt.Sprintf("%s%d _SSHOW %s", indent(r.Level+1), r.Level+1, r.SSHOW_)
+	if r.Sshow_ != "" { // AQ14
+		s = fmt.Sprintf("%s%d _SSHOW %s", indent(r.Level+1), r.Level+1, r.Sshow_)
+		ss = append(ss, s)
+	}
+
+	if r.Stime_ != "" { // AQ15
+		s = fmt.Sprintf("%s%d _STIME %s", indent(r.Level+1), r.Level+1, r.Stime_)
+		ss = append(ss, s)
+	}
+
+	if r.mediaLinks != nil { // AQ15
+		s = r.mediaLinks.String()
+		ss = append(ss, s)
+	}
+
+	if r.SrcPp_ != "" { // AQ15
+		s = fmt.Sprintf("%s%d _SRCPP %s", indent(r.Level+1), r.Level+1, r.SrcPp_)
+		ss = append(ss, s)
+	}
+
+	if r.SrcFlip_ != "" { // AQ15
+		s = fmt.Sprintf("%s%d _SRCFLIP %s", indent(r.Level+1), r.Level+1, r.SrcFlip_)
 		ss = append(ss, s)
 	}
 
@@ -1500,6 +1545,11 @@ func (r *NameRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.PhoneticName != "" {
+		s = fmt.Sprintf("%s%d FONE %s", indent(r.Level+1), r.Level+1, r.PhoneticName)
+		ss = append(ss, s)
+	}
+
 	if r.PreferedGivenName_ != "" {
 		s = fmt.Sprintf("%s%d _PGVN %s", indent(r.Level+1), r.Level+1, r.PreferedGivenName_)
 		ss = append(ss, s)
@@ -1520,8 +1570,8 @@ func (r *NameRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.AKA_ != nil {
-		for _, aka := range r.AKA_ {
+	if r.AlsoKnownAs_ != nil {
+		for _, aka := range r.AlsoKnownAs_ {
 			s = fmt.Sprintf("%s%d _AKA %s", indent(r.Level+1), r.Level+1, aka)
 			ss = append(ss, s)
 		}
@@ -1581,8 +1631,8 @@ func (r *NoteRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -1602,6 +1652,27 @@ func (r NoteRecords) String() string {
 	// log.Printf("NoteRecords type(r): %T\n", r)
 	for _, x := range r {
 		s = x.String()
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM pedigree record
+func (r *PedigreeRecord) String() string {
+	var ss []string
+	var s string
+
+	s = fmt.Sprintf("%s%d PEDI %s", indent(r.Level), r.Level, r.Pedigree)
+	ss = append(ss, s)
+
+	if r.Husband_ != "" {
+		s = fmt.Sprintf("%s%d _HUSB %s", indent(r.Level+1), r.Level+1, r.Husband_)
+		ss = append(ss, s)
+	}
+
+	if r.Wife_ != "" {
+		s = fmt.Sprintf("%s%d _WIFE %s", indent(r.Level+1), r.Level+1, r.Wife_)
 		ss = append(ss, s)
 	}
 
@@ -1759,8 +1830,8 @@ func (r *RepositoryRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -1834,68 +1905,75 @@ func (r *RootRecord) String() string {
 	var ss []string
 	var s string
 
-	if r.Header != nil {
+	if r.Header != nil { // HEAD
 		s = r.Header.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.Submission) > 0 {
+	if len(r.Submission) > 0 { // SUBM
 		s = r.Submission.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.Submitter) > 0 {
+	if len(r.Submitter) > 0 { // SUB
 		s = r.Submitter.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.Place) > 0 {
-		s = r.Place.String()
-		ss = append(ss, s)
-	}
-
-	if len(r.Event) > 0 {
-		s = r.Event.String()
-		ss = append(ss, s)
-	}
-
-	if len(r.Individual) > 0 {
+	if len(r.Individual) > 0 { // INDI
 		s = r.Individual.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.Family) > 0 {
+	if len(r.Family) > 0 { // FAM
 		s = r.Family.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.Repository) > 0 {
-		s = r.Repository.String()
-		ss = append(ss, s)
-	}
-
-	if len(r.Source) > 0 {
-		s = r.Source.String()
-		ss = append(ss, s)
-	}
-
-	if len(r.Note) > 0 {
+	if len(r.Note) > 0 { // NOTE
 		s = r.Note.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.Media) > 0 {
+	if len(r.Media) > 0 { // OBJE
 		s = r.Media.String()
 		ss = append(ss, s)
 	}
 
-	if len(r.ChildStatus) > 0 {
+	if len(r.ChildStatus) > 0 { // _CSTS
 		s = r.ChildStatus.String()
 		ss = append(ss, s)
 	}
 
-	if r.Trailer != nil {
+	// _EVENT_DEFN
+
+	if len(r.Todo_) > 0 { // _TODO
+		s = r.Todo_.String()
+		ss = append(ss, s)
+	}
+
+	if len(r.Source) > 0 { // SOUR
+		s = r.Source.String()
+		ss = append(ss, s)
+	}
+
+	if len(r.Repository) > 0 { // REPO
+		s = r.Repository.String()
+		ss = append(ss, s)
+	}
+
+	if r.Trailer != nil { // TRLR
 		s = r.Trailer.String()
+		ss = append(ss, s)
+	}
+
+	if len(r.Place) > 0 { // PLAC
+		s = r.Place.String()
+		ss = append(ss, s)
+	}
+
+	if len(r.Event) > 0 { // EVEN
+		s = r.Event.String()
 		ss = append(ss, s)
 	}
 
@@ -2037,8 +2115,8 @@ func (r *SourceRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -2143,8 +2221,8 @@ func (r *SubmissionRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -2264,8 +2342,8 @@ func (r *SubmitterRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.RIN != "" {
-		s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, r.RIN)
+	if r.RecordInternal != "" {
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -2319,6 +2397,54 @@ func (r *SystemRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM level 0 todo record
+func (r *TodoRecord) String() string {
+	var ss []string
+	var s string
+
+	s = fmt.Sprintf("%s%d @%s@ _TODO", indent(r.Level), r.Level, r.Xref)
+	ss = append(ss, s)
+
+	if r.Description != "" {
+		s = fmt.Sprintf("%s%d DESC %s", indent(r.Level+1), r.Level+1, r.Description)
+		ss = append(ss, s)
+	}
+
+	if r.Priority_ != "" {
+		s = fmt.Sprintf("%s%d _PRIORITY %s", indent(r.Level+1), r.Level+1, r.Priority_)
+		ss = append(ss, s)
+	}
+
+	if r.Type != "" {
+		s = fmt.Sprintf("%s%d TYPE %s", indent(r.Level+1), r.Level+1, r.Type)
+		ss = append(ss, s)
+	}
+
+	if r.Status != "" {
+		s = fmt.Sprintf("%s%d STAT %s", indent(r.Level+1), r.Level+1, r.Status)
+		ss = append(ss, s)
+	}
+
+	if r.Date2_ != "" {
+		s = fmt.Sprintf("%s%d _DATE2 %s", indent(r.Level+1), r.Level+1, r.Date2_)
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of todo records
+func (r TodoRecords) String() string {
+	var ss []string
+	var s string
+
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
 	return strings.Join(ss, "\n")
 }
 

@@ -52,7 +52,7 @@ func LongWrite(w io.Writer, level int, xref string, tag string, longString strin
 	return nbytes, err
 }
 
-// Write a level 0 line
+// WriteLine0 writes a level 0 line
 func WriteLine0(w io.Writer, level int, xref string, tag string, value string) (n int, err error) {
 
 	spacer := " "
@@ -65,7 +65,7 @@ func WriteLine0(w io.Writer, level int, xref string, tag string, value string) (
 	return n, err
 }
 
-// Write a link line
+// WriteLineLink writes a link line
 func WriteLineLink(w io.Writer, level int, tag string, xref string) (n int, err error) {
 
 	sXref := ""
@@ -78,7 +78,7 @@ func WriteLineLink(w io.Writer, level int, tag string, xref string) (n int, err 
 	return n, err
 }
 
-// Write a level n line
+// WriteLineN writes a level n line
 func WriteLineN(w io.Writer, level int, tag string, value string) (n int, err error) {
 
 	spacer := " "
@@ -91,7 +91,7 @@ func WriteLineN(w io.Writer, level int, tag string, value string) (n int, err er
 	return n, err
 }
 
-// Write a level n+1 line
+// WriteLineNp1 writes a level n+1 line
 func WriteLineNp1(w io.Writer, level int, tag string, value string) (n int, err error) {
 
 	spacer := " "
@@ -336,6 +336,11 @@ func (r *CitationRecord) Write(w io.Writer) (nbytes int, err error) {
 	n, err = LongWrite(w, r.Level, xref, "SOUR", r.Value)
 	nbytes += n
 
+	if r.ReferenceNumber != "" {
+		n, err = WriteLineNp1(w, r.Level, "REFN", r.ReferenceNumber)
+		nbytes += n
+	}
+
 	if r.Page != "" {
 		n, err = WriteLineNp1(w, r.Level, "PAGE", r.Page)
 		nbytes += n
@@ -400,13 +405,18 @@ func (r *CitationRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.Rin_ != "" {
+	if r.Date != "" { // Leg8
+		n, err = WriteLineNp1(w, r.Level, "DATE", r.Date)
+		nbytes += n
+	}
+
+	if r.Rin_ != "" { // AQ14
 		n, err = WriteLineNp1(w, r.Level, "_RIN", r.Rin_)
 		nbytes += n
 	}
 
-	if r.Date != "" {
-		n, err = WriteLineNp1(w, r.Level, "DATE", r.Date)
+	if r.AppliesTo_ != "" { // AQ15
+		n, err = WriteLineNp1(w, r.Level, "_APPLIES_TO", r.AppliesTo_)
 		nbytes += n
 	}
 
@@ -676,8 +686,8 @@ func (r *EventRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.UID_ != nil {
-		for _, uid := range r.UID_ {
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
 			n, err = WriteLineNp1(w, r.Level, "_UID", uid)
 			nbytes += n
 		}
@@ -711,11 +721,6 @@ func (r *FamilyLink) Write(w io.Writer) (nbytes int, err error) {
 	n, err = WriteLineLink(w, r.Level, r.Tag, r.Family.Xref)
 	nbytes += n
 
-	if r.Pedigree != "" {
-		n, err = WriteLineNp1(w, r.Level, "PEDI", r.Pedigree)
-		nbytes += n
-	}
-
 	if r.Adopted != "" {
 		n, err = WriteLineNp1(w, r.Level, "ADOP", r.Adopted)
 		nbytes += n
@@ -728,6 +733,16 @@ func (r *FamilyLink) Write(w io.Writer) (nbytes int, err error) {
 
 	if r.Note != nil {
 		n, err = r.Note.Write(w)
+		nbytes += n
+	}
+
+	if r.Pedigree != nil {
+		n, err = r.Pedigree.Write(w)
+		nbytes += n
+	}
+
+	if r.Citation != nil {
+		n, err = r.Citation.Write(w)
 		nbytes += n
 	}
 
@@ -780,8 +795,8 @@ func (r *FamilyRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
@@ -815,8 +830,8 @@ func (r *FamilyRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.UID_ != nil {
-		for _, uid := range r.UID_ {
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
 			n, err = WriteLineNp1(w, r.Level, "_UID", uid)
 			nbytes += n
 		}
@@ -1156,13 +1171,13 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
-	if r.UID_ != nil {
-		for _, uid := range r.UID_ {
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
 			n, err = WriteLineNp1(w, r.Level, "_UID", uid)
 			nbytes += n
 		}
@@ -1223,11 +1238,6 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.Change != nil {
-		n, err = r.Change.Write(w)
-		nbytes += n
-	}
-
 	if r.Alias != "" {
 		n, err = WriteLineNp1(w, r.Level, "ALIA", r.Alias)
 		nbytes += n
@@ -1252,6 +1262,16 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	if r.PPExclude_ != "" { // Leg8
 		n, err = WriteLineNp1(w, r.Level, "_PPEXCLUDE", r.PPExclude_)
+		nbytes += n
+	}
+
+	if r.Change != nil {
+		n, err = r.Change.Write(w)
+		nbytes += n
+	}
+
+	if r.Todo_ != "" { // AQ15
+		n, err = WriteLineNp1(w, r.Level, "_TODO", r.Todo_)
 		nbytes += n
 	}
 
@@ -1321,8 +1341,8 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.URL_ != "" {
-		n, err = WriteLineNp1(w, r.Level, "_URL", r.URL_)
+	if r.Url_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_URL", r.Url_)
 		nbytes += n
 	}
 
@@ -1396,8 +1416,8 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.Rin != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.Rin)
 		nbytes += n
 	}
 
@@ -1411,8 +1431,13 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.SCBK_ != "" { // AQ14
-		n, err = WriteLineNp1(w, r.Level, "_SCBK", r.SCBK_)
+	if r.FsFtId_ != "" { // AQ15
+		n, err = WriteLineNp1(w, r.Level, "_FSFTID", r.FsFtId_)
+		nbytes += n
+	}
+
+	if r.Scbk_ != "" { // AQ14
+		n, err = WriteLineNp1(w, r.Level, "_SCBK", r.Scbk_)
 		nbytes += n
 	}
 
@@ -1426,8 +1451,28 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.SSHOW_ != "" { // AQ14
-		n, err = WriteLineNp1(w, r.Level, "_SSHOW", r.SSHOW_)
+	if r.Sshow_ != "" { // AQ14
+		n, err = WriteLineNp1(w, r.Level, "_SSHOW", r.Sshow_)
+		nbytes += n
+	}
+
+	if r.Stime_ != "" { // AQ15
+		n, err = WriteLineNp1(w, r.Level, "_STIME", r.Stime_)
+		nbytes += n
+	}
+
+	if r.mediaLinks != nil {
+		n, err = r.mediaLinks.Write(w)
+		nbytes += n
+	}
+
+	if r.SrcPp_ != "" { // AQ15
+		n, err = WriteLineNp1(w, r.Level, "_SRCPP", r.SrcPp_)
+		nbytes += n
+	}
+
+	if r.SrcFlip_ != "" { // AQ15
+		n, err = WriteLineNp1(w, r.Level, "_SRCFLIP", r.SrcFlip_)
 		nbytes += n
 	}
 
@@ -1494,6 +1539,11 @@ func (r *NameRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
+	if r.PhoneticName != "" {
+		n, err = WriteLineNp1(w, r.Level, "FONE", r.PhoneticName)
+		nbytes += n
+	}
+
 	if r.MarriedName_ != "" { // AQ14
 		n, err = WriteLineNp1(w, r.Level, "_MARNM", r.MarriedName_)
 		nbytes += n
@@ -1509,8 +1559,8 @@ func (r *NameRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.AKA_ != nil {
-		for _, aka := range r.AKA_ {
+	if r.AlsoKnownAs_ != nil {
+		for _, aka := range r.AlsoKnownAs_ {
 			n, err = WriteLineNp1(w, r.Level, "_AKA", aka)
 			nbytes += n
 		}
@@ -1566,8 +1616,8 @@ func (r *NoteRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
@@ -1586,6 +1636,26 @@ func (r NoteRecords) Write(w io.Writer) (nbytes int, err error) {
 	//log.Printf("NoteRecords type(r): %T\n", r)
 	for _, x := range r {
 		n, err = x.Write(w)
+		nbytes += n
+	}
+
+	return nbytes, err
+}
+
+// Write formats and writes a GEDCOM pedigree record
+func (r *PedigreeRecord) Write(w io.Writer) (nbytes int, err error) {
+	var n int
+
+	n, err = WriteLineN(w, r.Level, "PEDI", r.Pedigree)
+	nbytes += n
+
+	if r.Husband_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_HUSB", r.Husband_)
+		nbytes += n
+	}
+
+	if r.Wife_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_WIFE", r.Wife_)
 		nbytes += n
 	}
 
@@ -1740,8 +1810,8 @@ func (r *RepositoryRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
@@ -1819,7 +1889,7 @@ func (r *RootRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if len(r.Submission) > 0 {
+	if len(r.Submission) > 0 { // SUBM
 		r.Submission.Write(w)
 		nbytes += n
 	}
@@ -1829,52 +1899,57 @@ func (r *RootRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if len(r.Place) > 0 {
-		r.Place.Write(w)
-		nbytes += n
-	}
-
-	if len(r.Event) > 0 {
-		r.Event.Write(w)
-		nbytes += n
-	}
-
-	if len(r.Individual) > 0 {
+	if len(r.Individual) > 0 { // INDI
 		r.Individual.Write(w)
 		nbytes += n
 	}
 
-	if len(r.Family) > 0 {
+	if len(r.Family) > 0 { // FAM
 		r.Family.Write(w)
 		nbytes += n
 	}
 
-	if len(r.Repository) > 0 {
-		r.Repository.Write(w)
-		nbytes += n
-	}
-
-	if len(r.Source) > 0 {
-		r.Source.Write(w)
-		nbytes += n
-	}
-
-	if len(r.Note) > 0 {
+	if len(r.Note) > 0 { // NOTE
 		r.Note.Write(w)
 		nbytes += n
 	}
 
-	if len(r.Media) > 0 {
+	if len(r.Place) > 0 { // PLAC
+		r.Place.Write(w)
+		nbytes += n
+	}
+
+	if len(r.Event) > 0 { // EVEN
+		r.Event.Write(w)
+		nbytes += n
+	}
+
+	if len(r.Media) > 0 { // OBJE
 		n, err = r.Media.Write(w)
 		nbytes += n
 	}
 
-	if len(r.ChildStatus) > 0 {
+	if len(r.ChildStatus) > 0 { // _CSTA
 		n, err = r.ChildStatus.Write(w)
 		nbytes += n
 	}
 
-	if r.Trailer != nil {
+	if len(r.Todo_) > 0 { // _TODO
+		r.Todo_.Write(w)
+		nbytes += n
+	}
+
+	if len(r.Source) > 0 { // SOUR
+		r.Source.Write(w)
+		nbytes += n
+	}
+
+	if len(r.Repository) > 0 { // REPO
+		r.Repository.Write(w)
+		nbytes += n
+	}
+
+	if r.Trailer != nil { // TRLR
 		n, err = r.Trailer.Write(w)
 		nbytes += n
 	}
@@ -2014,8 +2089,8 @@ func (r *SourceRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
@@ -2117,8 +2192,8 @@ func (r *SubmissionRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
@@ -2236,8 +2311,8 @@ func (r *SubmitterRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.RIN != "" {
-		n, err = WriteLineNp1(w, r.Level, "RIN", r.RIN)
+	if r.RecordInternal != "" {
+		n, err = WriteLineNp1(w, r.Level, "RecordInternal", r.RecordInternal)
 		nbytes += n
 	}
 
@@ -2284,6 +2359,53 @@ func (r *SystemRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	if r.SourceData != nil {
 		n, err = r.SourceData.Write(w)
+		nbytes += n
+	}
+
+	return nbytes, err
+}
+
+// Write formats and writes a GEDCOM level 0 todo record
+func (r *TodoRecord) Write(w io.Writer) (nbytes int, err error) {
+	var n int
+
+	n, err = LongWrite(w, r.Level, r.Xref, "_TODO", r.Value)
+	nbytes += n
+
+	if r.Description != "" {
+		n, err = WriteLineNp1(w, r.Level, "DESC", r.Description)
+		nbytes += n
+	}
+
+	if r.Priority_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_PRIORITY", r.Priority_)
+		nbytes += n
+	}
+
+	if r.Type != "" {
+		n, err = WriteLineNp1(w, r.Level, "TYPE", r.Type)
+		nbytes += n
+	}
+
+	if r.Status != "" {
+		n, err = WriteLineNp1(w, r.Level, "STAT", r.Status)
+		nbytes += n
+	}
+
+	if r.Date2_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_DATE2", r.Date2_)
+		nbytes += n
+	}
+
+	return nbytes, err
+}
+
+// Write formats and writes a slice of todo records
+func (r TodoRecords) Write(w io.Writer) (nbytes int, err error) {
+	var n int
+
+	for _, x := range r {
+		n, err = x.Write(w)
 		nbytes += n
 	}
 
