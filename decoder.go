@@ -937,8 +937,7 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 			r.Email = value
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -987,8 +986,7 @@ func makeFamilyLinkParser(d *Decoder, r *FamilyLink, minLevel int) parser {
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		case "SOUR": // AQ15
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1069,8 +1067,7 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 			}
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1243,8 +1240,7 @@ func makeHistoryParser(d *Decoder, r *HistoryRecord, minLevel int) parser {
 			r.History = r.History + value
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1272,8 +1268,7 @@ func makeIndividualLinkParser(d *Decoder, r *IndividualLink, minLevel int) parse
 			d.pushParser(makeEventParser(d, rec, level))
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1417,8 +1412,7 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			d.pushParser(makeHistoryParser(d, rec, level))
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1677,8 +1671,7 @@ func makeNameParser(d *Decoder, r *NameRecord, minLevel int) parser {
 			r.Nickname = append(r.Nickname, value)
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1713,8 +1706,7 @@ func makeNoteParser(d *Decoder, r *NoteRecord, minLevel int) parser {
 			r.Note = r.Note + value
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 
@@ -1821,8 +1813,7 @@ func makePlaceParser(d *Decoder, r *PlaceRecord, minLevel int) parser {
 			d.pushParser(makePlacePartParser(d, rec, level))
 
 		case "SOUR":
-			sour := d.source(stripXref(value))
-			rec := &CitationRecord{Level: level, Value: stripValue(value), Source: sour}
+			rec := &CitationRecord{Level: level, Value: value}
 			r.Citation = append(r.Citation, rec)
 			d.pushParser(makeCitationParser(d, rec, level))
 

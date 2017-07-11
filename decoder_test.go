@@ -7,13 +7,16 @@ package gedcom
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/go-test/deep"
 )
 
 var (
@@ -119,16 +122,29 @@ func TestIndiName2(t *testing.T) {
 	g, _ := d.Decode()
 	i1 := g.Individual[0]
 
+	// 1 NAME given name /surname/jr.
+	// 2 SOUR @SOURCE1@
+	// 3 PAGE 42
+	// 3 DATA
+	// 4 DATE BEF 1 JAN 1900
+	// 4 TEXT a sample text
+	// 5 CONT Sample text continued here. The word TE
+	// 5 CONC ST should not be broken!
+	// 3 QUAY 0
+	// 3 NOTE A note
+	// 4 CONT Note continued here. The word TE
+	// 4 CONC ST should not be broken!
+	// 2 NOTE Personal Name note
+	// 3 CONT Note continued here. The word TE
+	// 3 CONC ST should not be broken!
+
 	name1 := &NameRecord{
 		Level: 1,
 		Name:  "given name /surname/jr.",
 		Citation: CitationRecords{
 			&CitationRecord{
-				Level: 2,
-				Source: &SourceRecord{
-					Xref: "SOURCE1",
-				},
-
+				Level:   2,
+				Value:   "@SOURCE1@",
 				Page:    "42",
 				Quality: "0",
 				Data: DataRecords{
@@ -156,11 +172,20 @@ func TestIndiName2(t *testing.T) {
 		},
 	}
 
-	if !reflect.DeepEqual(i1.Name[0], name1) {
-		t.Errorf("Individual 0 name 0 was: %q\nExpected: %q\n",
-			spew.Sdump(i1.Name[0]), spew.Sdump(name1))
-		//t.Errorf("Individual 0 name 0 \n%s:\n%v\n%s:\n%v\n",
-		//	"was", i1.Name[0], "Expected", name1)
+	//	if !reflect.DeepEqual(i1.Name[0], name1) {
+	//		t.Errorf("Individual 0 name 0 was: %q\nExpected: %q\n",
+	//			spew.Sdump(i1.Name[0]), spew.Sdump(name1))
+	//		//t.Errorf("Individual 0 name 0 \n%s:\n%v\n%s:\n%v\n",
+	//		//	"was", i1.Name[0], "Expected", name1)
+	//	}
+	if diff := deep.Equal(i1.Name[0], name1); diff != nil {
+		fmt.Println(strings.Repeat("=", 80))
+		for n, d := range diff {
+			fmt.Println(n, strings.Repeat("-", 80))
+			fmt.Println(d)
+		}
+		fmt.Println(strings.Repeat("=", 80))
+		t.Error(diff)
 	}
 }
 
@@ -205,10 +230,8 @@ func TestIndiEvents2(t *testing.T) {
 		},
 		Citation: []*CitationRecord{
 			&CitationRecord{
-				Level: 2,
-				Source: &SourceRecord{
-					Xref: "SOURCE1",
-				},
+				Level:   2,
+				Value:   "@SOURCE1@",
 				Page:    "42",
 				Quality: "2",
 				Data: []*DataRecord{
@@ -271,10 +294,7 @@ func TestIndiAttribute2(t *testing.T) {
 		},
 		Citation: []*CitationRecord{
 			&CitationRecord{
-				Source: &SourceRecord{
-					Xref:  "SOURCE1",
-					Title: "",
-				},
+				Value:   "@SOURCE1@",
 				Page:    "42",
 				Quality: "3",
 				Data: []*DataRecord{

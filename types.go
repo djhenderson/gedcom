@@ -86,25 +86,26 @@ type ChildStatusRecords []*ChildStatusRecord
 
 // CitationRecord represents a link to a source record
 type CitationRecord struct {
-	Level             int           // ..SOUR level; not 0
-	Value             string        // value of ..SOUR excluding xref
-	Source            *SourceRecord // linked source
-	Page              string        // ..SOUR.PAGE
-	Reference         string        // ..SOUR.REF
-	FamilySearchFTID_ string        // ..SOUR._FSFTID (AQ14)
-	Event             EventRecords  // ..SOUR.EVEN
-	Data              DataRecords   // ..SOUR.DATA
-	Text              []string      // ..SOUR.TEXT
-	Quality           string        // ..SOUR.QUAY
-	Media             MediaLinks    // ..SOUR.OBJE
-	CONS              string        // ..SOUR.CONS
-	Direct            string        // ..SOUR.DIRE
-	SourceQuality     string        // ..SOUR.SOQU
-	Note              NoteRecords   // ..SOUR.NOTE
-	Date              string        // ..SOUR.DATE (Leg8)
-	ReferenceNumber   string        // ..SOUR.REFN
-	Rin_              string        // ..SOUR._RIN (AQ14)
-	AppliesTo_        string        // ..SOUR._APPLIES_TO (AQ15)
+	Level int    // ..SOUR level; not 0
+	Xref  string // xref_id of non-0 level SOUR
+	Value string // value of ..SOUR excluding xref
+	//Source            *SourceRecord // linked source
+	Page              string       // ..SOUR.PAGE
+	Reference         string       // ..SOUR.REF
+	FamilySearchFTID_ string       // ..SOUR._FSFTID (AQ14)
+	Event             EventRecords // ..SOUR.EVEN
+	Data              DataRecords  // ..SOUR.DATA
+	Text              []string     // ..SOUR.TEXT
+	Quality           string       // ..SOUR.QUAY
+	Media             MediaLinks   // ..SOUR.OBJE
+	CONS              string       // ..SOUR.CONS
+	Direct            string       // ..SOUR.DIRE
+	SourceQuality     string       // ..SOUR.SOQU
+	Note              NoteRecords  // ..SOUR.NOTE
+	Date              string       // ..SOUR.DATE (Leg8)
+	ReferenceNumber   string       // ..SOUR.REFN
+	Rin_              string       // ..SOUR._RIN (AQ14)
+	AppliesTo_        string       // ..SOUR._APPLIES_TO (AQ15)
 }
 
 // CitationRecords represents a slice of links to source records

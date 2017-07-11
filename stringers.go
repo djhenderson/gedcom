@@ -285,11 +285,7 @@ func (r *CitationRecord) String() string {
 	var ss []string
 	var s string
 
-	xref := ""
-	if r.Source != nil {
-		xref = r.Source.Xref
-	}
-	sas := LongString(r.Level, xref, "SOUR", r.Value)
+	sas := LongString(r.Level, r.Xref, "SOUR", r.Value)
 	ss = append(ss, sas...)
 
 	if r.ReferenceNumber != "" {
@@ -387,10 +383,10 @@ func (r CitationRecords) String() string {
 	var s string
 
 	//log.Printf("CitationRecords type(r): %T\n", r)
-	for _, note := range r {
-		//log.Printf("CitationRecords type(note): %T\n", note)
-		//log.Printf("CitationRecords type(*note): %T\n", *note)
-		s = note.String()
+	for _, citation := range r {
+		//log.Printf("CitationRecords type(note): %T\n", citation)
+		//log.Printf("CitationRecords type(*note): %T\n", *citation)
+		s = citation.String()
 		ss = append(ss, s)
 	}
 

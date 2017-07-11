@@ -329,11 +329,7 @@ func (r ChildStatusRecords) Write(w io.Writer) (nbytes int, err error) {
 func (r *CitationRecord) Write(w io.Writer) (nbytes int, err error) {
 	var n int
 
-	xref := ""
-	if r.Source != nil {
-		xref = r.Source.Xref
-	}
-	n, err = LongWrite(w, r.Level, xref, "SOUR", r.Value)
+	n, err = LongWrite(w, r.Level, r.Xref, "SOUR", r.Value)
 	nbytes += n
 
 	if r.ReferenceNumber != "" {
@@ -428,10 +424,10 @@ func (r CitationRecords) Write(w io.Writer) (nbytes int, err error) {
 	var n int
 
 	//log.Printf("CitationRecords type(r): %T\n", r)
-	for _, note := range r {
-		//log.Printf("CitationRecords type(note): %T\n", note)
-		//log.Printf("CitationRecords type(*note): %T\n", *note)
-		n, err = note.Write(w)
+	for _, citation := range r {
+		//log.Printf("CitationRecords type(note): %T\n", citation)
+		//log.Printf("CitationRecords type(*note): %T\n", *citation)
+		n, err = citation.Write(w)
 		nbytes += n
 	}
 
