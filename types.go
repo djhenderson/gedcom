@@ -141,8 +141,17 @@ type DateRecord struct {
 
 // EventDefinitionRecord represents a GEDCOM event definition record.
 type EventDefinitionRecord struct {
-	Level int    // Level 0 _EVENT_DEFN
-	Xref  string // Level 0 xref
+	Level            int          // Level 0 _EVENT_DEFN
+	Xref             string       // Level 0 xref
+	Tag              string       // Level 0 tag
+	Name             string       // _EVENT_DEFN value
+	Type             string       // _EVENT_DEFN.TYPE
+	Title            TitleRecords // _EVENT_DEFN.TITL
+	Abbreviation     string       // _EVENT_DEFN.ABBR
+	Sentence_        string       // _EVENT_DEFN._SENT
+	DescriptionFlag_ string       // _EVENT_DEFN._DESC_FLAG
+	Association_     string       // _EVENT_DEFN._Assoc
+	RecordInternal_  string       // _EVENT_DEFN._RIN
 }
 
 // EventDefinitionRecords represents a slice of event definition records.
@@ -251,6 +260,7 @@ type HeaderRecord struct {
 	SourceSystem *SystemRecord       // HEAD.SOUR
 	Destination  string              // HEAD.DEST
 	Date         *DateRecord         // HEAD.DATE
+	Time         string              // HEAD.TIME
 	FileName     string              // HEAD.FILE
 	Gedcom       *GedcomRecord       // HEAD.GEDC
 	CharacterSet *CharacterSetRecord // HEAD.CHAR
@@ -296,6 +306,7 @@ type IndividualRecord struct {
 	Level               int                        // INDI level; always 0
 	Xref                string                     // xref_id of INDI
 	Name                NameRecords                // INDI.NAME
+	Title               string                     // INDI.TITL
 	Status_             string                     // INDI._STAT (AQ14)
 	Restriction         string                     // INDI.RESN
 	Sex                 string                     // INDI.SEX
@@ -336,7 +347,7 @@ type IndividualRecord struct {
 	ProfilePicture_     *MediaLink                 // INDI._PROF
 	PPExclude_          string                     // INDI._PPEXCLUDE (Leg8)
 	Change              *ChangeRecord              // INDI.CHAN
-	Todo_               string                     // INDI._TODO (AQ15)
+	Todo_               []string                   // INDI._TODO (AQ15)
 }
 
 // IndividualRecords represents a slice of individual records
@@ -381,8 +392,7 @@ type MediaRecord struct {
 	Scbk_               string                     // OBJE._SCBK (AQ14)
 	Primary_            string                     // OBJE._PRIM (AQ14)
 	Type_               string                     // OBJE._TYPE (AQ14)
-	Sshow_              string                     // OBJE._SSHOW (AQ14)
-	Stime_              string                     // OBJE._STIME (AQ15)
+	Sshow_              *SlideShowRecord           // OBJE._SSHOW (AQ14)
 	mediaLinks          MediaLinks                 // OBJE.OBJE (AQ15)
 	SrcPp_              string                     // OBJE._SRCPP (AQ15)
 	SrcFlip_            string                     // OBJE._SRCFLIP (AQ15)
@@ -553,6 +563,13 @@ type ShortTitleRecord struct {
 	Indexed    string // ..SHTI.INDX
 }
 
+// SlideShowRecord represents a slide show record (AQ14)
+type SlideShowRecord struct {
+	Level     int    // .._SSHOW level
+	Included  string // .._SSHOW value
+	ShowTime_ string // .._SSHOW._STIME value
+}
+
 // SourceRecord represents a GEDCOM source record.
 // Note: A CitationRecord is a link to a source record
 type SourceRecord struct {
@@ -657,6 +674,16 @@ type SystemRecord struct {
 	SourceData  *DataRecord     // HEAD.SOUR.DATA
 }
 
+// TitleRecords represents a slice of title links
+type TitleRecords []*TitleRecord
+
+// TitleRecord represents a title record
+type TitleRecord struct {
+	Level        int    // ..TITL level
+	Title        string // ..TITL value
+	Abbreviation string // ..TITL.ABBR
+}
+
 // TodoLink represents a link to a todo record
 type TodoLink struct {
 	Level int    // .._TODO level
@@ -673,8 +700,10 @@ type TodoRecord struct {
 	Value       string // .._TODO value
 	Description string // .._TODO.DESC
 	Priority_   string // .._TODO._PRIORITY
+	Category_   string // .._TODO._CAT
 	Type        string // .._TODO.TYPE
 	Status      string // .._TODO.STAT
+	Date        string // .._TODO.DATE
 	Date2_      string // .._TODO._DATE2
 }
 

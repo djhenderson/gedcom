@@ -773,17 +773,39 @@ func makeEventDefinitionParser(d *Decoder, r *EventDefinitionRecord, minLevel in
 		}
 		switch tag {
 
-		case "TYPE", "TITL", "ABBR", "ROLE",
+		case "TYPE":
+			r.Type = value
+
+		case "TITL":
+			rec := &TitleRecord{Level: level, Title: value}
+			r.Title = append(r.Title, rec)
+			d.pushParser(makeTitleParser(d, rec, level))
+
+		case "ABBR":
+			r.Abbreviation = value
+
+		case "_SENT":
+			r.Sentence_ = value
+
+		case "_DESC_FLAG":
+			r.DescriptionFlag_ = value
+
+		case "_Assoc":
+			r.Association_ = value
+
+		case "_RIN":
+			r.RecordInternal_ = value
+
+		case "ROLE",
 			"PLAC", "DATE", "DESC",
 			"SENT", "CONT", "CONC",
-			"_RIN", "_SENT",
 			"_SENM", "_SENDOM", "_SENPOM", "_SENDPM",
 			"_SENF", "_SENDOF", "_SENPOF", "_SENDPF",
 			"_SENU", "_SENDOU", "_SENPOU", "_SENDPU",
 			"_SEN1", "_SEN2", "_SEN3", "_SEN4",
 			"_SEN5", "_SEN6", "_SEN7", "_SEN8",
-			"_INC_NOTES", "_DEF", "_PP_EXCLUDE", "_Assoc",
-			"_DATE_TYPE", "_PLACE_TYPE", "_DESC_FLAG", "_CONF_FLAG":
+			"_INC_NOTES", "_DEF", "_PP_EXCLUDE",
+			"_DATE_TYPE", "_PLACE_TYPE", "_CONF_FLAG":
 			// TODO
 
 		default:
@@ -1137,6 +1159,9 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 			r.Date = rec
 			d.pushParser(makeDateParser(d, rec, level))
 
+		case "TIME":
+			r.Time = value
+
 		case "GEDC":
 			rec := &GedcomRecord{Level: level}
 			r.Gedcom = rec
@@ -1298,10 +1323,13 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			"GRAD", "IDNO", "ILLN", "IMMI", "IMMIG", "MARR", "MILI",
 			"MILI_AWA", "MILI_RET", "NATI", "NATU", "NCHI", "NMR", "OCCU",
 			"ORDN", "PROB", "PROP", "RELI", "RESD", "RESI", "RETI", "SLGC",
-			"SSN", "TITL", "TRAV", "WAR", "WILL":
+			"SSN", "TRAV", "WAR", "WILL":
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
+
+		case "TITL":
+			r.Title = value
 
 		case "ATTR":
 			r.Attribute = value
@@ -1460,7 +1488,7 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		case "_TODO": // AQ15
-			r.Todo_ = value
+			r.Todo_ = append(r.Todo_, value)
 
 		default:
 			log.Printf("unhandled Individual tag: %d %s %s\n", level, tag, value)
@@ -1571,10 +1599,9 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 			r.Type_ = value
 
 		case "_SSHOW": // AQ14
-			r.Sshow_ = value
-
-		case "_STIME": // AQ15
-			r.Stime_ = value
+			rec := &SlideShowRecord{Level: level, Included: value}
+			r.Sshow_ = rec
+			d.pushParser(makeSlideShowParser(d, rec, level))
 
 		case "OBJE":
 			if value != "" {
@@ -1956,6 +1983,8 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 
 			case "_EVENT_DEFN": // AQ14
 				rec := d.eventDefinition(xref)
+				rec.Tag = tag
+				rec.Name = value
 				r.EventDefinition_ = append(r.EventDefinition_, rec)
 				d.pushParser(makeEventDefinitionParser(d, rec, level))
 
@@ -2048,6 +2077,24 @@ func makeShortTitleParser(d *Decoder, r *ShortTitleRecord, minLevel int) parser 
 
 		default:
 			log.Printf("unhandled Short Title tag: %d %s %s\n", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+func makeSlideShowParser(d *Decoder, r *SlideShowRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "_STIME":
+			r.ShowTime_ = value
+
+		default:
+			log.Printf("unhandled Slide Show tag: %d %s %s\n", level, tag, value)
 		}
 
 		return nil
@@ -2389,6 +2436,24 @@ func makeTextParser(d *Decoder, s *string, minLevel int) parser {
 	}
 }
 
+func makeTitleParser(d *Decoder, r *TitleRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "ABBR":
+			r.Abbreviation = value
+
+		default:
+			log.Printf("unhandled Title tag: %d %s %s\n", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
 func makeTodoParser(d *Decoder, r *TodoRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2402,11 +2467,17 @@ func makeTodoParser(d *Decoder, r *TodoRecord, minLevel int) parser {
 		case "_PRIORITY":
 			r.Priority_ = value
 
+		case "_CAT":
+			r.Category_ = value
+
 		case "TYPE":
 			r.Type = value
 
 		case "STAT":
 			r.Status = value
+
+		case "DATE":
+			r.Date = value
 
 		case "_DATE2":
 			r.Date2_ = value
