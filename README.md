@@ -1,6 +1,13 @@
 # gedcom
 
-Go package to parse GEDCOM files.
+Go package to parse GEDCOM files into Go structures.
+Also write these to GEDCOM files.
+
+[![GoDoc](https://godoc.org/github.com/djhenderson/gedcom?status.svg)](https://godoc.org/github.com/djhenderson/gedcom)
+
+## Note
+
+This is a fork of [github.com/iand/gedcom](https://github.com/iand/gedcom) with major revisions and additions.
 
 ## Usage
 
@@ -13,54 +20,50 @@ This example shows how to parse a GEDCOM file and list all the individuals. In t
 
 	import (
 		"bytes"
-		"github.com/iand/gedcom"
+		"github.com/djhenderson/gedcom"
 		"io/ioutil"
 	)
 
     func main() {
-		data, _ := ioutil.ReadFile("testdata/kennedy.ged")
+		data, _ := ioutil.ReadFile("testdata/kennedy.ged") // read all data
 
-		d := gedcom.NewDecoder(bytes.NewReader(data))
+		d := gedcom.NewDecoder(bytes.NewReader(data)) // make the decoder
 
-		g, _ := d.Decode()
+		g, _ := d.Decode() // decode all data
 
-		for _, rec := range g.Individual {
-			if len(rec.Name) > 0 {
-				println(rec.Name[0].Name)
-			}			
+		for _, rec := range g.Individual { // for all individuals
+			if len(rec.Name) > 0 { // check that individual has a name
+				println(rec.Name[0].Name) // print the name
+			}
 		}
 	}
 
-The structures produced by the Decoder are in [types.go](types.go) and correspond roughly 1:1 to the structures in the [http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm](GEDCOM specification).
+The structures produced by the Decoder are in [types.go](types.go) and correspond roughly 1:1 to the structures in the [GEDCOM specification](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm).
 
-This package does not implement the entire GEDCOM specification, I'm still working on it. It's about 80% complete which is enough for about 99% of GEDCOM files. It has not been extensively tested with non-ASCII character sets nor with pathalogical cases such as the [http://www.geditcom.com/gedcom.html](GEDCOM 5.5 Torture Test Files).
+This package does not implement the entire GEDCOM specification, I'm still working on it. It's been tested with all available of GEDCOM files. It has been extensively tested with non-ASCII character sets and with pathalogical cases such as the [GEDCOM 5.5 Torture Test Files](http://www.geditcom.com/gedcom.html).
 
 ## Installation
 
 Simply run
 
-	go get github.com/iand/gedcom
+	go get github.com/djhenderson/gedcom
 
-Documentation is at [http://godoc.org/github.com/iand/gedcom](http://godoc.org/github.com/iand/gedcom)
+Documentation is at [https://godoc.org/github.com/djhenderson/gedcom](https://godoc.org/github.com/djhenderson/gedcom)
 
 ## Authors
 
-* [Ian Davis](http://github.com/iand) - <http://iandavis.com/>
-
-
-## Contributors
-* [Doug Henderson](http://github.com/djhenderson)
-
+* [Ian Davis](https://github.com/iand) - <http://iandavis.com/>
+* [Doug Henderson](https://github.com/djhenderson)
 
 ## Contributing
 
 * Do submit your changes as a pull request
 * Do your best to adhere to the existing coding conventions and idioms.
-* Do run `go fmt` on the code before committing 
+* Do run `go fmt` on the code before committing
 * Do feel free to add yourself to the [`CREDITS`](CREDITS) file and the
-  corresponding Contributors list in the the [`README.md`](README.md). 
+  corresponding Contributors list in the the [`README.md`](README.md).
   Alphabetical order applies.
-* Don't touch the [`AUTHORS`](AUTHORS) file. An existing author will add you if 
+* Don't touch the [`AUTHORS`](AUTHORS) file. An existing author will add you if
   your contributions are significant enough.
 * Do note that in order for any non-trivial changes to be merged (as a rule
   of thumb, additions larger than about 15 lines of code), an explicit

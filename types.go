@@ -5,6 +5,8 @@ information, see <http://unlicense.org/> or the accompanying UNLICENSE file.
 
 package gedcom
 
+import "log"
+
 // AddressRecord represents an address record
 type AddressRecord struct {
 	Level      int         // ..ADDR level
@@ -23,6 +25,63 @@ type AddressRecord struct {
 
 // AddressRecords represents a slice of address records
 type AddressRecords []*AddressRecord
+
+// AttributeRecord represents a GEDCOM attribute
+// An attribute is almost identical to an event.
+type AttributeRecord struct {
+	Level           int             // ..EVEN level; 0 or higher
+	Xref            string          // xref_id of level 0 ..EVEN
+	Tag             string          // Event tag EVEN or BIRT or ...
+	Value           string          // Event value
+	Type            string          // ..EVEN.TYPE
+	Name            string          // ..EVEN.NAME
+	Primary_        string          // ..EVEN._PRIM
+	Date            *DateRecord     // ..EVEN.DATE
+	Date2_          *DateRecord     // ..EVEN._DATE2 (AQ14)
+	Place           *PlaceRecord    // ..EVEN.PLAC
+	Place2_         *PlaceRecord    // ..EVEN._PLAC2 (AQ14)
+	Description2_   string          // ..EVEN._Description2 (AQ14)
+	Role            RoleRecords     // ..EVEN.ROLE
+	Address         *AddressRecord  // ..EVEN.ADDR
+	Phone           []string        // ..EVEN.PHON
+	Parents         FamilyLinks     // ..EVEN.FAMC
+	Husband         *IndividualLink // ..EVEN.HUSB
+	Wife            *IndividualLink // ..EVEN.WIFE
+	Spouse          *IndividualLink // ..EVEN.SPOU
+	Agency          string          // ..EVEN.AGNC
+	Cause           string          // ..EVEN.CAUS
+	Temple          string          // ..EVEN.TEMP
+	Quality         string          // ..EVEN.QUAY
+	Status          string          // ..EVEN.STAT
+	UniqueId_       []string        // ..EVEN._UID
+	RecordInternal  string          // ..EVEN.RecordInternal
+	Email           string          // ..EVEN.EMAIL
+	Media           MediaLinks      // ..EVEN.OBJE
+	Citation        CitationRecords // ..EVEN.SOUR
+	Note            NoteRecords     // ..EVEN.NOTE
+	Change          *ChangeRecord   // ..EVEN.CHAN
+	UpdateTime_     string          // ..EVEN._UPD
+	AlternateBirth_ string          // ..EVEN._ALT_BIRTH (AQ14)
+	Confidential_   string          // ..EVEN._CONFIDENTIAL (AQ14)
+}
+
+// VitalAttribute returns true when an attribute is a vital attribute
+func (r *AttributeRecord) VitalAttribute() bool {
+	if r.Tag == "EVEN" {
+		return false
+	} else {
+		vitalTags := []string{"DSCR"}
+		for _, tag := range vitalTags {
+			if tag == r.Tag {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// AttributeRecords represents a slice of attribute records
+type AttributeRecords []*AttributeRecord
 
 // AuthorRecord represents a data record
 type AuthorRecord struct {
@@ -86,10 +145,9 @@ type ChildStatusRecords []*ChildStatusRecord
 
 // CitationRecord represents a link to a source record
 type CitationRecord struct {
-	Level int    // ..SOUR level; not 0
-	Xref  string // xref_id of non-0 level SOUR
-	Value string // value of ..SOUR excluding xref
-	//Source            *SourceRecord // linked source
+	Level             int          // ..SOUR level; not 0
+	Xref              string       // xref_id of non-0 level SOUR
+	Value             string       // value of ..SOUR excluding xref
 	Page              string       // ..SOUR.PAGE
 	Reference         string       // ..SOUR.REF
 	FamilySearchFTID_ string       // ..SOUR._FSFTID (AQ14)
@@ -106,9 +164,19 @@ type CitationRecord struct {
 	ReferenceNumber   string       // ..SOUR.REFN
 	Rin_              string       // ..SOUR._RIN (AQ14)
 	AppliesTo_        string       // ..SOUR._APPLIES_TO (AQ15)
+
+	source *SourceRecord // linked source
 }
 
-// CitationRecords represents a slice of links to source records
+// Source retrieves the SourceRecord linked by the citation
+func (r *CitationRecord) Source(d *Decoder) *SourceRecord {
+	if r.source == nil {
+		r.source = d.FindSource(r.Value)
+	}
+	return r.source
+}
+
+// CitationRecords represents a slice of citation records
 type CitationRecords []*CitationRecord
 
 // DataRecord represents a data record
@@ -196,6 +264,21 @@ type EventRecord struct {
 	Confidential_   string          // ..EVEN._CONFIDENTIAL (AQ14)
 }
 
+// VitalEvent returns true when an event is a vital event or attribute
+func (r *EventRecord) VitalEvent() bool {
+	if r.Tag == "EVEN" {
+		return false
+	} else {
+		vitalTags := []string{"BIRT", "CHR", "BAPT", "DEAT", "BURI", "DSCR", "MARR"}
+		for _, tag := range vitalTags {
+			if tag == r.Tag {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // EventRecords represents a slice of event records.
 type EventRecords []*EventRecord
 
@@ -203,12 +286,30 @@ type EventRecords []*EventRecord
 type FamilyLink struct {
 	Level    int             //  level
 	Tag      string          // tag from INDI.FAMC or INDI.FAMS or EVEN.FAMC
-	Family   *FamilyRecord   // target of INDI.FAMC or INDI.FAMS or EVEN.FAMC
+	Value    string          // value of FAMC, FAMS, etc.
 	Adopted  string          // INDI.FAMC.ADOP or ...
 	Primary_ string          // INDI.FAMC._PRIMARY or ...
 	Note     NoteRecords     // INDI.FAMC.NOTE or ..
 	Pedigree *PedigreeRecord // INDI.FAMC.PEDI or ..
 	Citation CitationRecords // INDI.FAMC.SOUR or ..
+
+	family *FamilyRecord // target of INDI.FAMC or INDI.FAMS or EVEN.FAMC
+}
+
+// GetFamily retrieves the FamilyRecord linked by the FamilyLink
+func (r *FamilyLink) GetFamily(d *Decoder) *FamilyRecord {
+	if r.family == nil && d != nil {
+		r.family = d.FindFamily(r.Value)
+	}
+	if r.family == nil {
+		log.Printf("Warning: GetFamily returns nil for '%s'\n", r.Value)
+	}
+	return r.family
+}
+
+// SetFamily stores the FamilyRecord linked by the FamilyLink
+func (r *FamilyLink) SetFamily(f *FamilyRecord) {
+	r.family = f
 }
 
 // FamilyLinks represents a slice of links to family records.
@@ -312,7 +413,7 @@ type IndividualRecord struct {
 	Restriction         string                     // INDI.RESN
 	Sex                 string                     // INDI.SEX
 	Event               EventRecords               // INDI.BIRT, INDI.CHR, INDI.DEAT, INDI.BURI, INDI.EVEN
-	Attribute           string                     // INDI.ATTR
+	Attribute           AttributeRecords           // INDI.ATTR, INDI.CAST, etc.
 	Parents             FamilyLinks                // INDI.FAMC
 	Family              FamilyLinks                // INDI.FAMS
 	Address             AddressRecords             // INDI.ADDR
@@ -394,10 +495,11 @@ type MediaRecord struct {
 	Primary_            string                     // OBJE._PRIM (AQ14)
 	Type_               string                     // OBJE._TYPE (AQ14)
 	Sshow_              *SlideShowRecord           // OBJE._SSHOW (AQ14)
-	mediaLinks          MediaLinks                 // OBJE.OBJE (AQ15)
 	SrcPp_              string                     // OBJE._SRCPP (AQ15)
 	SrcFlip_            string                     // OBJE._SRCFLIP (AQ15)
 	FsFtId_             string                     // OBJE._FSFTID (AQ15)
+
+	mediaLinks MediaLinks // OBJE.OBJE (AQ15)
 }
 
 // MediaRecords represents a slice of media records

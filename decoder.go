@@ -11,7 +11,7 @@ import (
 	"io"
 	"log"
 	"strconv"
-	"strings"
+	//"strings"
 )
 
 // A Decoder reads and decodes GEDCOM objects from an input stream.
@@ -79,7 +79,13 @@ func (d *Decoder) scan(r *RootRecord) {
 				break
 			}
 
-			d.parsers[len(d.parsers)-1](s.level, string(s.tag), string(s.value), string(s.xref))
+			var xref string
+			if s.xref != nil && len(s.xref) > 0 {
+				xref = "@" + string(s.xref) + "@"
+			} else {
+				xref = ""
+			}
+			d.parsers[len(d.parsers)-1](s.level, string(s.tag), string(s.value), xref)
 
 		}
 
@@ -114,7 +120,41 @@ func (d *Decoder) popParser(level int, tag string, value string, xref string) er
 	return d.parsers[len(d.parsers)-1](level, tag, value, xref)
 }
 
+// FindFamily returns the FamilyRecord for an xref
+func (d *Decoder) FindFamily(xref string) *FamilyRecord {
+	ref, found := d.refs[xref]
+	if !found || ref == nil {
+		// log.Printf("FindFamily(%s) not found.\n", xref)
+		return nil
+	}
+	f, found := ref.(*FamilyRecord)
+	if !found {
+		log.Fatalf("FindFamily(%s) not a Family\n", xref)
+	}
+	return f
+}
+
+// FindSource returns the SourceRecord for an xref
+func (d *Decoder) FindSource(xref string) *SourceRecord {
+	return d.refs[xref].(*SourceRecord)
+}
+
 // Level 0 record constructors
+
+// attribute finds or creates a level 0 AttributeRecord or a link to one
+func (d *Decoder) XXattribute(xref string) *AttributeRecord {
+	if xref == "" {
+		return &AttributeRecord{}
+	}
+
+	ref, found := d.refs[xref].(*AttributeRecord)
+	if !found {
+		rec := &AttributeRecord{Xref: xref}
+		d.refs[rec.Xref] = rec
+		return rec
+	}
+	return ref
+}
 
 // childStatus finds or creates a level 0 ChildStatusRecord or a link to one
 func (d *Decoder) childStatus(xref string) *ChildStatusRecord {
@@ -167,8 +207,8 @@ func (d *Decoder) family(xref string) *FamilyRecord {
 		return &FamilyRecord{}
 	}
 
-	ref, found := d.refs[xref].(*FamilyRecord)
-	if !found {
+	ref := d.FindFamily(xref)
+	if ref == nil {
 		rec := &FamilyRecord{Xref: xref}
 		d.refs[rec.Xref] = rec
 		return rec
@@ -410,6 +450,151 @@ func makeAddressParser(d *Decoder, r *AddressRecord, minLevel int) parser {
 
 		default:
 			log.Printf("unhandled Address tag: %d %s %s\n", level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+func makeAttributeParser(d *Decoder, r *AttributeRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "TYPE":
+			r.Type = value
+
+		case "NAME":
+			r.Name = value
+
+			//		case "_PRIM":
+			//			r.Primary_ = value
+
+			//		case "_ALT_BIRTH": // AQ14
+			//			r.AlternateBirth_ = value
+
+			//		case "_CONFIDENTIAL": // AQ14
+			//			r.Confidential_ = value
+
+		case "DATE":
+			rec := &DateRecord{Level: level, Tag: tag, Date: value}
+			r.Date = rec
+			d.pushParser(makeDateParser(d, rec, level))
+
+			//		case "_DATE2": // AQ14
+			//			rec := &DateRecord{Level: level, Tag: tag, Date: value}
+			//			r.Date2_ = rec
+			//			d.pushParser(makeDateParser(d, rec, level))
+
+		case "PLAC":
+			rec := &PlaceRecord{Level: level, Tag: tag, Name: value}
+			r.Place = rec
+			d.pushParser(makePlaceParser(d, rec, level))
+
+			//		case "_PLAC2": // AQ14
+			//			rec := &PlaceRecord{Level: level, Tag: tag, Name: value}
+			//			r.Place2_ = rec
+			//			d.pushParser(makePlaceParser(d, rec, level))
+
+			//		case "_Description2": // AQ14
+			//			r.Description2_ = value
+
+			//		case "ROLE": // This is a kind of IndividualLink
+			//			indi := d.individual(stripXref(value))
+			//			rec := &RoleRecord{Level: level, Role: stripValue(value), Individual: indi}
+			//			r.Role = append(r.Role, rec)
+			//			d.pushParser(makeRoleParser(d, rec, level))
+
+			//		case "ADDR":
+			//			rec := &AddressRecord{Level: level, Full: value}
+			//			r.Address = rec
+			//			d.pushParser(makeAddressParser(d, rec, level))
+
+			//		case "PHON":
+			//			r.Phone = append(r.Phone, value)
+
+			//		case "FAMC":
+			//			rec := &FamilyLink{Level: level, Tag: tag, Value: value}
+			//			r.Parents = append(r.Parents, rec)
+			//			d.pushParser(makeFamilyLinkParser(d, rec, level))
+
+			//		case "HUSB":
+			//			husband := d.individual(stripXref(value))
+			//			rec := &IndividualLink{Level: level, Tag: tag, Individual: husband}
+			//			r.Husband = rec
+			//			d.pushParser(makeIndividualLinkParser(d, rec, level))
+
+			//		case "WIFE":
+			//			wife := d.individual(stripXref(value))
+			//			rec := &IndividualLink{Level: level, Tag: tag, Individual: wife}
+			//			r.Wife = rec
+			//			d.pushParser(makeIndividualLinkParser(d, rec, level))
+
+			//		case "SPOU":
+			//			spouse := d.individual(stripXref(value))
+			//			rec := &IndividualLink{Level: level, Tag: tag, Individual: spouse}
+			//			r.Spouse = rec
+			//			d.pushParser(makeIndividualLinkParser(d, rec, level))
+
+			//		case "AGNC":
+			//			r.Agency = value
+
+			//		case "CAUS":
+			//			r.Cause = value
+
+			//		case "TEMP":
+			//			r.Temple = value
+
+			//		case "STAT":
+			//			r.Status = value
+
+		case "QUAY":
+			r.Quality = value
+
+			//		case "OBJE":
+			//			if value != "" {
+			//				media := d.media(stripXref(value))
+			//				rec := &MediaLink{Level: level, Tag: tag, Value: value, Media: media}
+			//				r.Media = append(r.Media, rec)
+			//				d.pushParser(makeMediaLinkParser(d, rec, level))
+			//			} else {
+			//				rec := &MediaRecord{Level: level, Tag: tag}
+			//				link := &MediaLink{Level: level, Tag: tag, Value: value, Media: rec}
+			//				r.Media = append(r.Media, link)
+			//				d.pushParser(makeMediaParser(d, rec, level))
+			//			}
+
+			//		case "_UID":
+			//			r.UniqueId_ = append(r.UniqueId_, value)
+
+		case "RecordInternal":
+			r.RecordInternal = value
+
+			//		case "EMAIL":
+			//			r.Email = value
+
+		case "SOUR":
+			rec := &CitationRecord{Level: level, Value: value}
+			r.Citation = append(r.Citation, rec)
+			d.pushParser(makeCitationParser(d, rec, level))
+
+		case "NOTE":
+			rec := &NoteRecord{Level: level, Note: value}
+			r.Note = append(r.Note, rec)
+			d.pushParser(makeNoteParser(d, rec, level))
+
+		case "CHAN":
+			rec := &ChangeRecord{Level: level}
+			r.Change = rec
+			d.pushParser(makeChangeParser(d, rec, level))
+
+			//		case "_UPD":
+			//			r.UpdateTime_ = value
+
+		default:
+			log.Printf("unhandled Attribute tag: %d %s %s\n", level, tag, value)
 		}
 
 		return nil
@@ -876,8 +1061,7 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 			r.Phone = append(r.Phone, value)
 
 		case "FAMC":
-			family := d.family(stripXref(value))
-			rec := &FamilyLink{Level: level, Tag: tag, Family: family}
+			rec := &FamilyLink{Level: level, Tag: tag, Value: value}
 			r.Parents = append(r.Parents, rec)
 			d.pushParser(makeFamilyLinkParser(d, rec, level))
 
@@ -967,6 +1151,12 @@ func makeFamilyLinkParser(d *Decoder, r *FamilyLink, minLevel int) parser {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
 		}
+
+		r.SetFamily(d.FindFamily(value))
+		if r.family == nil {
+			log.Printf("Warning: Family not found for '%s'\n", value)
+		}
+
 		switch tag {
 
 		case "PEDI":
@@ -1312,32 +1502,29 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 		case "SEX":
 			r.Sex = value
 
-		case "ADOP", "BAPL", "BAPM", "BARM", "BASM", "BIRT", "BLES", "BURI",
-			"CAST", "CENS", "CHR", "CHRA", "CONF", "CREM", "DEAT", "DSCR",
-			"EDUC", "ELEC", "EMIG", "ENDL", "ENGA", "EVEN", "FACT", "FCOM",
-			"GRAD", "IDNO", "ILLN", "IMMI", "IMMIG", "MARR", "MILI",
+		case "CAST", "DSCR", "EDUC", "IDNO":
+			rec := &AttributeRecord{Level: level, Tag: tag, Value: value}
+			r.Attribute = append(r.Attribute, rec)
+			d.pushParser(makeAttributeParser(d, rec, level))
+
+		case "ATTR", "ADOP", "BAPL", "BAPM", "BARM", "BASM", "BIRT", "BLES", "BURI",
+			"CENS", "CHR", "CHRA", "CONF", "CREM", "DEAT",
+			"ELEC", "EMIG", "ENDL", "ENGA", "EVEN", "FACT", "FCOM",
+			"GRAD", "ILLN", "IMMI", "IMMIG", "MARR", "MILI",
 			"MILI_AWA", "MILI_RET", "NATI", "NATU", "NCHI", "NMR", "OCCU",
 			"ORDN", "PROB", "PROP", "RELI", "RESD", "RESI", "RETI", "SLGC",
-			"SSN", "TRAV", "WAR", "WILL":
+			"SSN", "TITL", "TRAV", "WAR", "WILL":
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
 
-		case "TITL":
-			r.Title = value
-
-		case "ATTR":
-			r.Attribute = value
-
 		case "FAMC":
-			family := d.family(stripXref(value))
-			rec := &FamilyLink{Level: level, Tag: tag, Family: family}
+			rec := &FamilyLink{Level: level, Tag: tag, Value: value}
 			r.Parents = append(r.Parents, rec)
 			d.pushParser(makeFamilyLinkParser(d, rec, level))
 
 		case "FAMS":
-			family := d.family(stripXref(value))
-			rec := &FamilyLink{Level: level, Tag: tag, Family: family}
+			rec := &FamilyLink{Level: level, Tag: tag, Value: value}
 			r.Family = append(r.Family, rec)
 			d.pushParser(makeFamilyLinkParser(d, rec, level))
 
@@ -2533,27 +2720,29 @@ func makeWebTagParser(d *Decoder, r *WebTagRecord, minLevel int) parser {
 
 // stripXref removes value and surrounding @s from xref
 func stripXref(value string) string {
-	if value == "" {
-		return ""
-	}
-	if value[0] == '@' {
-		return strings.Trim(value, "@")
-	}
-	atIndex := strings.IndexByte(value, '@')
-	if atIndex >= 0 {
-		return strings.Trim(value[atIndex:], "@")
-	}
-	return ""
+	return value
+	//	if value == "" {
+	//		return ""
+	//	}
+	//	if value[0] == '@' {
+	//		return strings.Trim(value, "@")
+	//	}
+	//	atIndex := strings.IndexByte(value, '@')
+	//	if atIndex >= 0 {
+	//		return strings.Trim(value[atIndex:], "@")
+	//	}
+	//	return ""
 }
 
 // stripValue removes @ bracketed xref from value
 func stripValue(value string) string {
-	if value == "" {
-		return ""
-	}
-	atIndex := strings.IndexByte(value, '@')
-	if atIndex >= 0 {
-		return strings.Trim(value[:atIndex], " ")
-	}
 	return value
+	//	if value == "" {
+	//		return ""
+	//	}
+	//	atIndex := strings.IndexByte(value, '@')
+	//	if atIndex >= 0 {
+	//		return strings.Trim(value[:atIndex], " ")
+	//	}
+	//	return value
 }

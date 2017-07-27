@@ -31,7 +31,6 @@ func init() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	//defer logFile.Close()
 	log.SetOutput(logFile)
 
 	data, err = ioutil.ReadFile("testdata/allged.ged")
@@ -172,13 +171,8 @@ func TestIndiName2(t *testing.T) {
 		},
 	}
 
-	//	if !reflect.DeepEqual(i1.Name[0], name1) {
-	//		t.Errorf("Individual 0 name 0 was: %q\nExpected: %q\n",
-	//			spew.Sdump(i1.Name[0]), spew.Sdump(name1))
-	//		//t.Errorf("Individual 0 name 0 \n%s:\n%v\n%s:\n%v\n",
-	//		//	"was", i1.Name[0], "Expected", name1)
-	//	}
-	if diff := deep.Equal(i1.Name[0], name1); diff != nil {
+	diff := deep.Equal(i1.Name[0], name1)
+	if diff != nil {
 		fmt.Println(strings.Repeat("=", 80))
 		for n, d := range diff {
 			fmt.Println(n, strings.Repeat("-", 80))
@@ -206,6 +200,25 @@ func TestIndiEvents2(t *testing.T) {
 	g, _ := d.Decode()
 	i1 := g.Individual[0]
 
+	// 1 BIRT
+	// 2 DATE 31 DEC 1997
+	// 2 PLAC The place
+	// 2 SOUR @SOURCE1@
+	// 3 PAGE 42
+	// 3 DATA
+	// 4 DATE 31 DEC 1900
+	// 4 TEXT a sample text
+	// 5 CONT Sample text continued here. The word TE
+	// 5 CONC ST should not be broken!
+	// 3 QUAY 2
+	// 3 NOTE A note
+	// 4 CONT Note continued here. The word TE
+	// 4 CONC ST should not be broken!
+	// 2 NOTE BIRTH event note (the event of entering into life)
+	// 3 CONT Note continued here. The word TE
+	// 3 CONC ST should not be broken!
+	// 2 FAMC @PARENTS@
+
 	event1 := &EventRecord{
 		Level: 1,
 		Tag:   "BIRT",
@@ -223,9 +236,7 @@ func TestIndiEvents2(t *testing.T) {
 			&FamilyLink{
 				Level: 2,
 				Tag:   "FAMC",
-				Family: &FamilyRecord{
-					Xref: "PARENTS",
-				},
+				Value: "@PARENTS@",
 			},
 		},
 		Citation: []*CitationRecord{
@@ -259,9 +270,17 @@ func TestIndiEvents2(t *testing.T) {
 		},
 	}
 
-	if !reflect.DeepEqual(i1.Event[0], event1) {
-		t.Errorf("Individual 0 event 0 was: %q\nExpected: %q\n",
-			spew.Sdump(i1.Event[0]), spew.Sdump(event1))
+	diff := deep.Equal(i1.Event[0], event1)
+	if diff != nil {
+		//		t.Errorf("Individual 0 event 0 was: %q\nExpected: %q\n",
+		//			spew.Sdump(i1.Event[0]), spew.Sdump(event1))
+		fmt.Println(strings.Repeat("=", 80))
+		for n, d := range diff {
+			fmt.Println(n, strings.Repeat("-", 80))
+			fmt.Println(d)
+		}
+		fmt.Println(strings.Repeat("=", 80))
+		t.Error(diff)
 	}
 }
 
@@ -282,7 +301,7 @@ func TestIndiAttribute2(t *testing.T) {
 	g, _ := d.Decode()
 	i1 := g.Individual[0]
 
-	att1 := &EventRecord{
+	att1 := &AttributeRecord{
 		Level: 1,
 		Tag:   "CAST",
 		Value: "Cast name",
@@ -353,10 +372,7 @@ func TestIndiParents2(t *testing.T) {
 	fam1 := &FamilyLink{
 		Level: 2,
 		Tag:   "FAMC",
-		Family: &FamilyRecord{
-			Level: 0,
-			Xref:  "PARENTS",
-		},
+		Value: "@PARENTS@",
 	}
 
 	if !reflect.DeepEqual(i1.Parents[0], fam1) {
@@ -407,8 +423,7 @@ func TestSource2(t *testing.T) {
 	//0 @SOURCE1@ SOUR
 	sour1 := &SourceRecord{
 		Xref: "SOURCE1",
-		Data: &DataRecord{
-			Level: 1,
+		Data: &DataRecord{Level: 1,
 			Event: EventRecords{
 				&EventRecord{
 					//2 EVEN BIRT, CHR

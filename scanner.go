@@ -15,10 +15,10 @@ import (
 type scanner struct {
 	parseState int
 	tokenStart int
-	level      int
-	tag        []byte
-	value      []byte
-	xref       []byte
+	level      int    // the level
+	tag        []byte // tag
+	value      []byte // value
+	xref       []byte // xref (between level and tag)
 }
 
 const (

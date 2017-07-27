@@ -12,13 +12,6 @@ import (
 	"strings"
 )
 
-// CheckError logs a fatal error when passe a non-nil error code.
-func CheckError(err error) {
-	if err != nil {
-		log.Fatalln("writers: i/o error: ", err.Error())
-	}
-}
-
 // LongWrite formats a long string using CONT and CONC lines
 func LongWrite(w io.Writer, level int, xref string, tag string, longString string) (nbytes int, err error) {
 
@@ -32,7 +25,9 @@ func LongWrite(w io.Writer, level int, xref string, tag string, longString strin
 
 	if longString == "" {
 		nbytes, err := fmt.Fprintf(w, "%s%d%s %s%s\n", indent(level), level, sXref0, tag, sXrefN)
-		CheckError(err)
+		if err != nil {
+			log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+		}
 
 		return nbytes, err
 	}
@@ -40,7 +35,9 @@ func LongWrite(w io.Writer, level int, xref string, tag string, longString strin
 	parts := strings.Split(longString, "\n")
 	for i, part := range parts {
 		n, err := fmt.Fprintf(w, "%s%d%s %s%s %s\n", indent(level), level, sXref0, tag, sXrefN, part)
-		CheckError(err)
+		if err != nil {
+			log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+		}
 		nbytes += n
 
 		if i == 0 {
@@ -60,7 +57,9 @@ func WriteLine0(w io.Writer, level int, xref string, tag string, value string) (
 		spacer = ""
 	}
 	n, err = fmt.Fprintf(w, "%s%d @%s@ %s%s%s\n", indent(level), level, xref, tag, spacer, value)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 
 	return n, err
 }
@@ -73,7 +72,9 @@ func WriteLineLink(w io.Writer, level int, tag string, xref string) (n int, err 
 		sXref = fmt.Sprintf(" @%s@", xref)
 	}
 	n, err = fmt.Fprintf(w, "%s%d %s%s\n", indent(level), level, tag, sXref)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 
 	return n, err
 }
@@ -86,7 +87,9 @@ func WriteLineN(w io.Writer, level int, tag string, value string) (n int, err er
 		spacer = ""
 	}
 	n, err = fmt.Fprintf(w, "%s%d %s%s%s\n", indent(level), level, tag, spacer, value)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 
 	return n, err
 }
@@ -99,7 +102,9 @@ func WriteLineNp1(w io.Writer, level int, tag string, value string) (n int, err 
 		spacer = ""
 	}
 	n, err = fmt.Fprintf(w, "%s%d %s%s%s\n", indent(level+1), level+1, tag, spacer, value)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 
 	return n, err
 }
@@ -168,6 +173,178 @@ func (r *AddressRecord) Write(w io.Writer) (nbytes int, err error) {
 func (r AddressRecords) Write(w io.Writer) (nbytes int, err error) {
 	var n int
 
+	for _, x := range r {
+		n, err = x.Write(w)
+		nbytes += n
+	}
+
+	return nbytes, err
+}
+
+// Write formats and writes a GEDCOM attribute records
+func (r *AttributeRecord) Write(w io.Writer) (nbytes int, err error) {
+	var n int
+
+	id := ""
+	if r.Xref != "" {
+		id = fmt.Sprintf("@%s@ ", r.Xref)
+	}
+	spacer := " "
+	if r.Value == "" {
+		spacer = ""
+	}
+	n, err = fmt.Fprintf(w, "%s%d %s%s%s%s\n", indent(r.Level), r.Level, id, r.Tag, spacer, r.Value)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
+	nbytes += n
+
+	if r.Type != "" {
+		n, err = WriteLineNp1(w, r.Level, "TYPE", r.Type)
+		nbytes += n
+	}
+
+	if r.Name != "" {
+		n, err = WriteLineNp1(w, r.Level, "NAME", r.Name)
+		nbytes += n
+	}
+
+	if r.Primary_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_PRIM", r.Primary_)
+		nbytes += n
+	}
+
+	if r.AlternateBirth_ != "" { // AQ14
+		n, err = WriteLineNp1(w, r.Level, "_ALT_BIRTH", r.AlternateBirth_)
+		nbytes += n
+	}
+
+	if r.Confidential_ != "" { // AQ14
+		n, err = WriteLineNp1(w, r.Level, "_CONFIDENTIAL", r.Confidential_)
+		nbytes += n
+	}
+
+	if r.Date != nil {
+		n, err = r.Date.Write(w)
+		nbytes += n
+	}
+
+	if r.Date2_ != nil { // AQ14
+		n, err = r.Date2_.Write(w)
+		nbytes += n
+	}
+
+	if r.Place != nil {
+		n, err = r.Place.Write(w)
+		nbytes += n
+	}
+
+	if r.Place2_ != nil { // AQ14
+		n, err = r.Place2_.Write(w)
+		nbytes += n
+	}
+
+	if r.Description2_ != "" { // AQ14
+		n, err = WriteLineNp1(w, r.Level, "_Description2", r.Description2_)
+		nbytes += n
+	}
+
+	if r.Role != nil {
+		n, err = r.Role.Write(w)
+		nbytes += n
+	}
+	if r.Address != nil {
+		n, err = r.Address.Write(w)
+		nbytes += n
+	}
+
+	if r.Phone != nil {
+		for _, phone := range r.Phone {
+			n, err = WriteLineNp1(w, r.Level, "PHON", phone)
+			nbytes += n
+		}
+	}
+
+	if r.Parents != nil {
+		n, err = r.Parents.Write(w)
+		nbytes += n
+	}
+
+	if r.Husband != nil {
+		n, err = r.Husband.Write(w)
+		nbytes += n
+	}
+
+	if r.Wife != nil {
+		n, err = r.Wife.Write(w)
+		nbytes += n
+	}
+
+	if r.Spouse != nil {
+		n, err = r.Spouse.Write(w)
+		nbytes += n
+	}
+
+	if r.Agency != "" {
+		n, err = WriteLineNp1(w, r.Level, "AGNC", r.Agency)
+		nbytes += n
+	}
+
+	if r.Temple != "" {
+		n, err = WriteLineNp1(w, r.Level, "TEMP", r.Temple)
+		nbytes += n
+	}
+
+	if r.Status != "" {
+		n, err = WriteLineNp1(w, r.Level, "STAT", r.Status)
+		nbytes += n
+	}
+
+	if r.Media != nil {
+		n, err = r.Media.Write(w)
+		nbytes += n
+	}
+
+	if r.Citation != nil {
+		n, err = r.Citation.Write(w)
+		nbytes += n
+	}
+
+	if r.Note != nil {
+		n, err = r.Note.Write(w)
+		nbytes += n
+	}
+
+	if r.Change != nil {
+		n, err = r.Change.Write(w)
+		nbytes += n
+	}
+
+	if r.UniqueId_ != nil {
+		for _, uid := range r.UniqueId_ {
+			n, err = WriteLineNp1(w, r.Level, "_UID", uid)
+			nbytes += n
+		}
+	}
+
+	if r.UpdateTime_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_UPD", r.UpdateTime_)
+		nbytes += n
+	}
+
+	if r.Cause != "" {
+		n, err = WriteLineNp1(w, r.Level, "CAUS", r.Cause)
+		nbytes += n
+	}
+
+	return nbytes, err
+}
+
+// Write formats and writes a slice of event records
+func (r AttributeRecords) Write(w io.Writer) (nbytes int, err error) {
+	var n int
+
+	//log.Printf("AttributeRecords type(r): %T\n", r)
 	for _, x := range r {
 		n, err = x.Write(w)
 		nbytes += n
@@ -592,7 +769,9 @@ func (r *EventRecord) Write(w io.Writer) (nbytes int, err error) {
 		spacer = ""
 	}
 	n, err = fmt.Fprintf(w, "%s%d %s%s%s%s\n", indent(r.Level), r.Level, id, r.Tag, spacer, r.Value)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 	nbytes += n
 
 	if r.Type != "" {
@@ -753,7 +932,7 @@ func (r EventRecords) Write(w io.Writer) (nbytes int, err error) {
 func (r *FamilyLink) Write(w io.Writer) (nbytes int, err error) {
 	var n int
 
-	n, err = WriteLineLink(w, r.Level, r.Tag, r.Family.Xref)
+	n, err = WriteLineLink(w, r.Level, r.Tag, r.Value)
 	nbytes += n
 
 	if r.Adopted != "" {
@@ -1161,9 +1340,13 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 		}
 	}
 
-	if r.Attribute != "" {
-		n, err = WriteLineNp1(w, r.Level, "ATTR", r.Attribute)
-		nbytes += n
+	if r.Attribute != nil {
+		for _, attribute := range r.Attribute {
+			if attribute.VitalAttribute() {
+				attribute.Write(w)
+				nbytes += n
+			}
+		}
 	}
 
 	if r.UserReferenceNumber != nil {
@@ -1192,6 +1375,15 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 		for _, event := range r.Event {
 			if !event.VitalEvent() {
 				event.Write(w)
+				nbytes += n
+			}
+		}
+	}
+
+	if r.Attribute != nil {
+		for _, attribute := range r.Attribute {
+			if !attribute.VitalAttribute() {
+				attribute.Write(w)
 				nbytes += n
 			}
 		}
@@ -1408,7 +1600,9 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 	}
 
 	n, err = fmt.Fprintf(w, "%s%d%s %s%s\n", indent(r.Level), r.Level, id0, "OBJE", idN)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 	nbytes += n
 
 	if true || (r.Format != "") {
@@ -1757,7 +1951,9 @@ func (r *PlaceRecord) Write(w io.Writer) (nbytes int, err error) {
 	}
 
 	n, err = fmt.Fprintf(w, "%s%d %s%s %s\n", indent(r.Level), r.Level, id, r.Tag, r.Name)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 	nbytes += n
 
 	if r.Form != "" {
@@ -1926,7 +2122,9 @@ func (r *RoleRecord) Write(w io.Writer) (nbytes int, err error) {
 		spacer = " "
 	}
 	n, err = fmt.Fprintf(w, "%s%d ROLE %s%s%s\n", indent(r.Level), r.Level, r.Role, spacer, xref)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 	nbytes += n
 
 	if r.Principal != "" {
@@ -2037,13 +2235,17 @@ func (r *SchemaRecord) Write(w io.Writer) (nbytes int, err error) {
 	var n int
 
 	n, err = fmt.Fprintf(w, "%s%d SCHEMA\n", indent(r.Level), r.Level)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 	nbytes += n
 
 	for _, data := range r.Data {
 		level := int(data[0])
 		n, err = fmt.Fprintf(w, "%s\n", indent(level)+data)
-		CheckError(err)
+		if err != nil {
+			log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+		}
 		nbytes += n
 	}
 
@@ -2336,7 +2538,9 @@ func (r *SubmitterRecord) Write(w io.Writer) (nbytes int, err error) {
 		sXref0, sXrefn = "", fmt.Sprintf(" @%s@", r.Xref)
 	}
 	n, err = fmt.Fprintf(w, "%s%d %sSUBM%s\n", indent(r.Level), r.Level, sXref0, sXrefn)
-	CheckError(err)
+	if err != nil {
+		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
+	}
 	nbytes += n
 
 	if r.Name != "" {
