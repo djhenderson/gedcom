@@ -11,19 +11,28 @@ import (
 	"io"
 	"log"
 	"strconv"
-	//"strings"
 )
 
 // A Decoder reads and decodes GEDCOM objects from an input stream.
 type Decoder struct {
-	r       io.Reader
-	parsers []parser
-	refs    map[string]interface{}
+	r            io.Reader
+	parsers      []parser
+	refs         map[string]interface{}
+	LineNum      int
+	warningCount int
 }
 
 // NewDecoder returns a new decoder that reads from r.
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{r: r}
+}
+
+// Count warnings
+func (d *Decoder) CountWarnings() {
+	d.warningCount += 1
+	if d.warningCount >= 100 {
+		panic("too many warnings.")
+	}
 }
 
 // Decode reads the next GEDCOM-encoded value from its
@@ -69,6 +78,7 @@ func (d *Decoder) scan(r *RootRecord) {
 
 		for {
 			s.reset()
+			d.LineNum += 1
 			offset, err := s.nextTag(buf[pos:n])
 			pos += offset
 			if err != nil {
@@ -498,8 +508,8 @@ func makeAttributeParser(d *Decoder, r *AttributeRecord, minLevel int) parser {
 			//			r.Place2_ = rec
 			//			d.pushParser(makePlaceParser(d, rec, level))
 
-			//		case "_Description2": // AQ14
-			//			r.Description2_ = value
+		case "_Description2": // AQ14
+			r.Description2_ = value
 
 			//		case "ROLE": // This is a kind of IndividualLink
 			//			indi := d.individual(stripXref(value))
@@ -1152,10 +1162,13 @@ func makeFamilyLinkParser(d *Decoder, r *FamilyLink, minLevel int) parser {
 			return d.popParser(level, tag, value, xref)
 		}
 
-		r.SetFamily(d.FindFamily(value))
-		if r.family == nil {
-			log.Printf("Warning: Family not found for '%s'\n", value)
-		}
+		//		r.SetFamily(d.FindFamily(value))
+		//		if r.family == nil {
+		//			log.Printf("Warning: Family not found for '%s'\n", value)
+		//			log.Printf("Line number: %d\nLevel: %d\nTag: %s\nValue: %s\nXref: %s\n",
+		//				d.LineNum, level, tag, value, xref)
+		//			d.CountWarnings()
+		//		}
 
 		switch tag {
 
@@ -1502,13 +1515,13 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 		case "SEX":
 			r.Sex = value
 
-		case "CAST", "DSCR", "EDUC", "IDNO":
+		case "CAST", "DSCR", "IDNO":
 			rec := &AttributeRecord{Level: level, Tag: tag, Value: value}
 			r.Attribute = append(r.Attribute, rec)
 			d.pushParser(makeAttributeParser(d, rec, level))
 
 		case "ATTR", "ADOP", "BAPL", "BAPM", "BARM", "BASM", "BIRT", "BLES", "BURI",
-			"CENS", "CHR", "CHRA", "CONF", "CREM", "DEAT",
+			"CENS", "CHR", "CHRA", "CONF", "CREM", "DEAT", "EDUC",
 			"ELEC", "EMIG", "ENDL", "ENGA", "EVEN", "FACT", "FCOM",
 			"GRAD", "ILLN", "IMMI", "IMMIG", "MARR", "MILI",
 			"MILI_AWA", "MILI_RET", "NATI", "NATU", "NCHI", "NMR", "OCCU",

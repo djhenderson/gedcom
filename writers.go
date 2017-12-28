@@ -17,7 +17,7 @@ func LongWrite(w io.Writer, level int, xref string, tag string, longString strin
 
 	sXref0, sXrefN := "", ""
 	if xref != "" {
-		sXref0 = fmt.Sprintf(" @%s@", xref)
+		sXref0 = fmt.Sprintf(" %s", xref)
 		if level != 0 {
 			sXrefN, sXref0 = sXref0, sXrefN
 		}
@@ -56,7 +56,7 @@ func WriteLine0(w io.Writer, level int, xref string, tag string, value string) (
 	if value == "" {
 		spacer = ""
 	}
-	n, err = fmt.Fprintf(w, "%s%d @%s@ %s%s%s\n", indent(level), level, xref, tag, spacer, value)
+	n, err = fmt.Fprintf(w, "%s%d %s %s%s%s\n", indent(level), level, xref, tag, spacer, value)
 	if err != nil {
 		log.Fatalln("fmt.Fprintf: i/o error: ", err.Error())
 	}
@@ -69,7 +69,7 @@ func WriteLineLink(w io.Writer, level int, tag string, xref string) (n int, err 
 
 	sXref := ""
 	if xref != "" {
-		sXref = fmt.Sprintf(" @%s@", xref)
+		sXref = fmt.Sprintf(" %s", xref)
 	}
 	n, err = fmt.Fprintf(w, "%s%d %s%s\n", indent(level), level, tag, sXref)
 	if err != nil {
@@ -187,7 +187,7 @@ func (r *AttributeRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	id := ""
 	if r.Xref != "" {
-		id = fmt.Sprintf("@%s@ ", r.Xref)
+		id = fmt.Sprintf("%s ", r.Xref)
 	}
 	spacer := " "
 	if r.Value == "" {
@@ -762,7 +762,7 @@ func (r *EventRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	id := ""
 	if r.Xref != "" {
-		id = fmt.Sprintf("@%s@ ", r.Xref)
+		id = fmt.Sprintf("%s ", r.Xref)
 	}
 	spacer := " "
 	if r.Value == "" {
@@ -1592,7 +1592,7 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	id0, idN := "", ""
 	if r.Xref != "" {
-		id0 = fmt.Sprintf(" @%s@ ", r.Xref)
+		id0 = fmt.Sprintf(" %s ", r.Xref)
 
 		if r.Level != 0 {
 			idN, id0 = id0, idN
@@ -1947,7 +1947,7 @@ func (r *PlaceRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	id := ""
 	if r.Xref != "" {
-		id = fmt.Sprintf("@%s@ ", r.Xref)
+		id = fmt.Sprintf("%s ", r.Xref)
 	}
 
 	n, err = fmt.Fprintf(w, "%s%d %s%s %s\n", indent(r.Level), r.Level, id, r.Tag, r.Name)
@@ -2115,7 +2115,7 @@ func (r *RoleRecord) Write(w io.Writer) (nbytes int, err error) {
 	xref := ""
 	if r.Individual != nil {
 		if r.Individual.Xref != "" {
-			xref = fmt.Sprintf("@%s@", r.Individual.Xref)
+			xref = fmt.Sprintf("%s", r.Individual.Xref)
 		}
 	}
 	if r.Role != "" && xref != "" {
@@ -2533,9 +2533,9 @@ func (r *SubmitterRecord) Write(w io.Writer) (nbytes int, err error) {
 	var sXref0, sXrefn string
 
 	if r.Level == 0 {
-		sXrefn, sXref0 = "", fmt.Sprintf("@%s@ ", r.Xref)
+		sXrefn, sXref0 = "", fmt.Sprintf("%s ", r.Xref)
 	} else {
-		sXref0, sXrefn = "", fmt.Sprintf(" @%s@", r.Xref)
+		sXref0, sXrefn = "", fmt.Sprintf(" %s", r.Xref)
 	}
 	n, err = fmt.Fprintf(w, "%s%d %sSUBM%s\n", indent(r.Level), r.Level, sXref0, sXrefn)
 	if err != nil {

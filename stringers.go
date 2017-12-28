@@ -183,10 +183,10 @@ func (r *AttributeRecord) String() string {
 	//		ss = append(ss, s)
 	//	}
 
-	//	if r.Description2_ != "" { // AQ14
-	//		s = fmt.Sprintf("%s%d _Description2 %s", indent(r.Level+1), r.Level+1, r.Description2_)
-	//		ss = append(ss, s)
-	//	}
+	if r.Description2_ != "" { // AQ14
+		s = fmt.Sprintf("%s%d _Description2 %s", indent(r.Level+1), r.Level+1, r.Description2_)
+		ss = append(ss, s)
+	}
 
 	//	if r.Role != nil {
 	//		s = r.Role.String()
@@ -469,13 +469,13 @@ func (r *CitationRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Rin_ != "" { // AQ14
-		s = fmt.Sprintf("%s%d _RIN %s", indent(r.Level+1), r.Level+1, r.Rin_)
+	if r.Media != nil { // OBJE
+		s = r.Media.String()
 		ss = append(ss, s)
 	}
 
-	if r.Media != nil { // OBJE
-		s = r.Media.String()
+	if r.Rin_ != "" { // AQ14
+		s = fmt.Sprintf("%s%d _RIN %s", indent(r.Level+1), r.Level+1, r.Rin_)
 		ss = append(ss, s)
 	}
 
@@ -503,11 +503,6 @@ func (r *CitationRecord) String() string {
 		}
 	}
 
-	if r.Quality != "" {
-		s = fmt.Sprintf("%s%d QUAY %s", indent(r.Level+1), r.Level+1, r.Quality)
-		ss = append(ss, s)
-	}
-
 	if r.CONS != "" {
 		s = fmt.Sprintf("%s%d CONS %s", indent(r.Level+1), r.Level+1, r.CONS)
 		ss = append(ss, s)
@@ -533,6 +528,11 @@ func (r *CitationRecord) String() string {
 			s = data.String()
 			ss = append(ss, s)
 		}
+	}
+
+	if r.Quality != "" {
+		s = fmt.Sprintf("%s%d QUAY %s", indent(r.Level+1), r.Level+1, r.Quality)
+		ss = append(ss, s)
 	}
 
 	if r.Date != "" { // Leg8
