@@ -7,6 +7,7 @@ package gedcom
 
 import (
 	"fmt"
+	// "log"
 	"strings"
 )
 
@@ -96,7 +97,7 @@ func (r *AddressRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Phone != "" {
+	if r.Phone != nil {
 		s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, r.Phone)
 		ss = append(ss, s)
 	}
@@ -122,7 +123,52 @@ func (r AddressRecords) String() string {
 	return strings.Join(ss, "\n")
 }
 
-// String stringifies a GEDCOM attribute records
+// String stringifies a GEDCOM album record (MH/FTB8)
+func (r *AlbumRecord) String() string {
+	var ss []string
+	var s string
+
+	id := ""
+	if r.Xref != "" {
+		id = fmt.Sprintf("%s ", r.Xref)
+	}
+	s = fmt.Sprintf("%s%d %s", indent(r.Level), r.Level, id, "ALBUM")
+	ss = append(ss, s)
+
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.Title != "" {
+		s = fmt.Sprintf("%s%d TITL %s", indent(r.Level+1), r.Level+1, r.Title)
+		ss = append(ss, s)
+	}
+
+	if r.Photo_ != nil {
+		s = r.Photo_.String()
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of album records (MH/FTB8)
+func (r AlbumRecords) String() string {
+	var ss []string
+	var s string
+
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM attribute record
 func (r *AttributeRecord) String() string {
 	var ss []string
 	var s string
@@ -137,6 +183,20 @@ func (r *AttributeRecord) String() string {
 	}
 	s = fmt.Sprintf("%s%d %s%s%s%s", indent(r.Level), r.Level, id, r.Tag, spacer, r.Value)
 	ss = append(ss, s)
+
+	if r.UniqueId_ != nil { // MH/FTB8
+		for _, uid := range r.UniqueId_ {
+			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
 
 	if r.Type != "" {
 		s = fmt.Sprintf("%s%d TYPE %s", indent(r.Level+1), r.Level+1, r.Type)
@@ -459,6 +519,18 @@ func (r *CitationRecord) String() string {
 	sas := LongString(r.Level, r.Xref, "SOUR", r.Value)
 	ss = append(ss, sas...)
 
+	if r.Rin != nil {
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.Page != "" {
+		s = fmt.Sprintf("%s%d PAGE %s", indent(r.Level+1), r.Level+1, r.Page)
+		ss = append(ss, s)
+	}
+
 	if r.ReferenceNumber != "" {
 		s = fmt.Sprintf("%s%d REFN %s", indent(r.Level+1), r.Level+1, r.ReferenceNumber)
 		ss = append(ss, s)
@@ -474,14 +546,11 @@ func (r *CitationRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Rin_ != "" { // AQ14
-		s = fmt.Sprintf("%s%d _RIN %s", indent(r.Level+1), r.Level+1, r.Rin_)
-		ss = append(ss, s)
-	}
-
-	if r.Page != "" {
-		s = fmt.Sprintf("%s%d PAGE %s", indent(r.Level+1), r.Level+1, r.Page)
-		ss = append(ss, s)
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
 	}
 
 	if r.FamilySearchFTID_ != "" { // AQ14
@@ -644,6 +713,11 @@ func (r *DateRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.TimeZone_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _TIMEZONE %s", indent(r.Level+1), r.Level+1, r.TimeZone_)
+		ss = append(ss, s)
+	}
+
 	if r.Text != nil {
 		for _, text := range r.Text {
 			sas := LongString(r.Level+1, "", "TEXT", text)
@@ -730,6 +804,20 @@ func (r *EventRecord) String() string {
 	s = fmt.Sprintf("%s%d %s%s%s%s", indent(r.Level), r.Level, id, r.Tag, spacer, r.Value)
 	ss = append(ss, s)
 
+	if r.UniqueId_ != nil { // MH/FTB8
+		for _, uid := range r.UniqueId_ {
+			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
+
 	if r.Type != "" {
 		s = fmt.Sprintf("%s%d TYPE %s", indent(r.Level+1), r.Level+1, r.Type)
 		ss = append(ss, s)
@@ -777,6 +865,11 @@ func (r *EventRecord) String() string {
 
 	if r.Description2_ != "" { // AQ14
 		s = fmt.Sprintf("%s%d _Description2 %s", indent(r.Level+1), r.Level+1, r.Description2_)
+		ss = append(ss, s)
+	}
+
+	if r.Age != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d AGE %s", indent(r.Level+1), r.Level+1, r.Age)
 		ss = append(ss, s)
 	}
 
@@ -854,13 +947,6 @@ func (r *EventRecord) String() string {
 	if r.Change != nil {
 		s = r.Change.String()
 		ss = append(ss, s)
-	}
-
-	if r.UniqueId_ != nil {
-		for _, uid := range r.UniqueId_ {
-			s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, uid)
-			ss = append(ss, s)
-		}
 	}
 
 	if r.UpdateTime_ != "" {
@@ -942,6 +1028,13 @@ func (r *FamilyRecord) String() string {
 
 	s = fmt.Sprintf("%s%d %s FAM", indent(r.Level), r.Level, r.Xref)
 	ss = append(ss, s)
+
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
 
 	if r.Status_ != "" { // AQ14
 		s = fmt.Sprintf("%s%d _STAT %s", indent(r.Level+1), r.Level+1, r.Status_)
@@ -1134,6 +1227,31 @@ func (r *HeaderRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.Rins_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _RINS %s", indent(r.Level+1), r.Level+1, r.Rins_)
+		ss = append(ss, s)
+	}
+
+	if r.Uid_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, r.Uid_)
+		ss = append(ss, s)
+	}
+
+	if r.ProjectGuid_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _PROJECT_GUID %s", indent(r.Level+1), r.Level+1, r.ProjectGuid_)
+		ss = append(ss, s)
+	}
+
+	if r.ExportedFromSiteId_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _EXPORTED_FROM_SITE_ID %s", indent(r.Level+1), r.Level+1, r.ExportedFromSiteId_)
+		ss = append(ss, s)
+	}
+
+	if r.DescriptionAware_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _DESCRIPTION_AWARE %s", indent(r.Level+1), r.Level+1, r.DescriptionAware_)
+		ss = append(ss, s)
+	}
+
 	if r.Gedcom != nil {
 		s = r.Gedcom.String()
 		ss = append(ss, s)
@@ -1292,6 +1410,13 @@ func (r *IndividualRecord) String() string {
 
 	s = fmt.Sprintf("%s%d %s INDI", indent(r.Level), r.Level, r.Xref)
 	ss = append(ss, s)
+
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
 
 	for _, name := range r.Name {
 		s = name.String()
@@ -1695,8 +1820,8 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Rin != "" {
-		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.Rin)
+	if r.RecordInternal != "" { // ?
+		s = fmt.Sprintf("%s%d RecordInternal %s", indent(r.Level+1), r.Level+1, r.RecordInternal)
 		ss = append(ss, s)
 	}
 
@@ -1745,6 +1870,41 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.PrimCutout_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _PRIM_CUTOUT %s", indent(r.Level+1), r.Level+1, r.PrimCutout_)
+		ss = append(ss, s)
+	}
+
+	if r.Cutout_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _CUTOUT %s", indent(r.Level+1), r.Level+1, r.Cutout_)
+		ss = append(ss, s)
+	}
+
+	if r.Position_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _POSITION %s", indent(r.Level+1), r.Level+1, r.Position_)
+		ss = append(ss, s)
+	}
+
+	if r.Album_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _ALBUM %s", indent(r.Level+1), r.Level+1, r.Album_)
+		ss = append(ss, s)
+	}
+
+	if r.PhotoRin_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _PHOTO_RIN %s", indent(r.Level+1), r.Level+1, r.PhotoRin_)
+		ss = append(ss, s)
+	}
+
+	if r.Filesize_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _FILESIZE %s", indent(r.Level+1), r.Level+1, r.Filesize_)
+		ss = append(ss, s)
+	}
+
+	if r.ParentRin_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _PARENTRIN %s", indent(r.Level+1), r.Level+1, r.ParentRin_)
+		ss = append(ss, s)
+	}
+
 	if r.mediaLinks != nil { // AQ15
 		s = r.mediaLinks.String()
 		ss = append(ss, s)
@@ -1781,18 +1941,6 @@ func (r *NameRecord) String() string {
 			s = fmt.Sprintf("%s%d NICK %s", indent(r.Level+1), r.Level+1, nick)
 			ss = append(ss, s)
 		}
-	}
-
-	if r.AlsoKnownAs_ != nil {
-		for _, aka := range r.AlsoKnownAs_ {
-			s = fmt.Sprintf("%s%d _AKA %s", indent(r.Level+1), r.Level+1, aka)
-			ss = append(ss, s)
-		}
-	}
-
-	if r.MarriedName_ != "" { // AQ14
-		s = fmt.Sprintf("%s%d _MARNM %s", indent(r.Level+1), r.Level+1, r.MarriedName_)
-		ss = append(ss, s)
 	}
 
 	if r.Prefix != "" {
@@ -1832,6 +1980,23 @@ func (r *NameRecord) String() string {
 
 	if r.PhoneticName != "" {
 		s = fmt.Sprintf("%s%d FONE %s", indent(r.Level+1), r.Level+1, r.PhoneticName)
+		ss = append(ss, s)
+	}
+
+	if r.FormerName_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _FORMERNAME %s", indent(r.Level+1), r.Level+1, r.FormerName_)
+		ss = append(ss, s)
+	}
+
+	if r.AlsoKnownAs_ != nil {
+		for _, aka := range r.AlsoKnownAs_ {
+			s = fmt.Sprintf("%s%d _AKA %s", indent(r.Level+1), r.Level+1, aka)
+			ss = append(ss, s)
+		}
+	}
+
+	if r.MarriedName_ != "" { // AQ14, MH/FTB8
+		s = fmt.Sprintf("%s%d _MARNM %s", indent(r.Level+1), r.Level+1, r.MarriedName_)
 		ss = append(ss, s)
 	}
 
@@ -1907,6 +2072,11 @@ func (r *NoteRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.Description_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _DESCRIPTION %s", indent(r.Level+1), r.Level+1, r.Description_)
+		ss = append(ss, s)
+	}
+
 	return strings.Join(ss, "\n")
 }
 
@@ -1939,6 +2109,71 @@ func (r *PedigreeRecord) String() string {
 
 	if r.Wife_ != "" {
 		s = fmt.Sprintf("%s%d _WIFE %s", indent(r.Level+1), r.Level+1, r.Wife_)
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM phone record
+func (r *PhoneRecord) String() string {
+	var ss []string
+	var s string
+
+	s = fmt.Sprintf("%s%d PHON %s", indent(r.Level), r.Level, r.Phone)
+	ss = append(ss, s)
+
+	if r.Type_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _TYPE %s", indent(r.Level+1), r.Level+1, r.Type_)
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of phone records
+func (r PhoneRecords) String() string {
+	var ss []string
+	var s string
+
+	// log.Printf("PhoneRecords type(r): %T\n", r)
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM photo record (MH/FTB8)
+func (r *PhotoRecord) String() string {
+	var ss []string
+	var s string
+
+	s = fmt.Sprintf("%s%d _PHOTO", indent(r.Level), r.Level)
+	ss = append(ss, s)
+
+	if r.Uid_ != "" {
+		s = fmt.Sprintf("%s%d _UID %s", indent(r.Level+1), r.Level+1, r.Uid_)
+		ss = append(ss, s)
+	}
+
+	if r.Prin_ != "" {
+		s = fmt.Sprintf("%s%d _PRIN %s", indent(r.Level+1), r.Level+1, r.Prin_)
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of photo records (MH/FTB8)
+func (r PhotoRecords) String() string {
+	var ss []string
+	var s string
+
+	// log.Printf("PhotoRecords type(r): %T\n", r)
+	for _, x := range r {
+		s = x.String()
 		ss = append(ss, s)
 	}
 
@@ -2025,6 +2260,62 @@ func (r PlaceRecords) String() string {
 		ss = append(ss, s)
 	}
 
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a GEDCOM publish record (MN/FTB8)
+func (r *PublishRecord) String() string {
+	var ss []string
+	var s string
+
+	// log.Printf("PublishRecord type(r): %T\n", r)
+
+	xspacer := ""
+	if r.Xref != "" {
+		xspacer = " "
+	}
+
+	s = fmt.Sprintf("%s%d%s%s _PUBLISH", indent(r.Level), r.Level, xspacer, r.Xref)
+	ss = append(ss, s)
+
+	if r.SiteAddress_ != "" {
+		s = fmt.Sprintf("%s%d _SITEADDRESS %s", indent(r.Level+1), r.Level+1, r.SiteAddress_)
+		ss = append(ss, s)
+	}
+
+	if r.SiteName_ != "" {
+		s = fmt.Sprintf("%s%d _SITENAME %s", indent(r.Level+1), r.Level+1, r.SiteName_)
+		ss = append(ss, s)
+	}
+
+	if r.SiteId_ != "" {
+		s = fmt.Sprintf("%s%d _SITEID %s", indent(r.Level+1), r.Level+1, r.SiteId_)
+		ss = append(ss, s)
+	}
+
+	if r.SiteName_ != "" {
+		s = fmt.Sprintf("%s%d _USERNAME %s", indent(r.Level+1), r.Level+1, r.SiteName_)
+		ss = append(ss, s)
+	}
+
+	if r.Disabled_ != "" {
+		s = fmt.Sprintf("%s%d _DISABLED %s", indent(r.Level+1), r.Level+1, r.Disabled_)
+		ss = append(ss, s)
+	}
+
+	return strings.Join(ss, "\n")
+}
+
+// String stringifies a slice of publish records (MH/FTB8)
+func (r PublishRecords) String() string {
+	var ss []string
+	var s string
+
+	// log.Printf("PublishRecords type(r): %T\n", r)
+	for _, x := range r {
+		s = x.String()
+		ss = append(ss, s)
+	}
 	return strings.Join(ss, "\n")
 }
 
@@ -2176,6 +2467,12 @@ func (r *RootRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	// log.Printf("r.Publish_ type(r): %T\n", r.Publish_)
+	if len(r.Publish_) > 0 { // _PUBLISH (MN/FTB8)
+		s = r.Publish_.String()
+		ss = append(ss, s)
+	}
+
 	if len(r.Submission) > 0 { // SUBM
 		s = r.Submission.String()
 		ss = append(ss, s)
@@ -2231,11 +2528,6 @@ func (r *RootRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Trailer != nil { // TRLR
-		s = r.Trailer.String()
-		ss = append(ss, s)
-	}
-
 	if len(r.Place) > 0 { // PLAC
 		s = r.Place.String()
 		ss = append(ss, s)
@@ -2243,6 +2535,16 @@ func (r *RootRecord) String() string {
 
 	if len(r.Event) > 0 { // EVEN
 		s = r.Event.String()
+		ss = append(ss, s)
+	}
+
+	if len(r.Album) > 0 { // ALBUM (MH/FTB8)
+		s = r.Album.String()
+		ss = append(ss, s)
+	}
+
+	if r.Trailer != nil { // TRLR
+		s = r.Trailer.String()
 		ss = append(ss, s)
 	}
 
@@ -2308,8 +2610,20 @@ func (r *SourceRecord) String() string {
 	sas := LongString(r.Level, r.Xref, "SOUR", r.Value)
 	ss = append(ss, sas...)
 
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
+
 	if r.Name != "" {
 		s = fmt.Sprintf("%s%d NAME %s", indent(r.Level+1), r.Level+1, r.Name)
+		ss = append(ss, s)
+	}
+
+	if r.Medi_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _MEDI %s", indent(r.Level+1), r.Level+1, r.Medi_)
 		ss = append(ss, s)
 	}
 
@@ -2565,6 +2879,13 @@ func (r *SubmitterRecord) String() string {
 	s = fmt.Sprintf("%s%d %sSUBM%s", indent(r.Level), r.Level, sXref0, sXrefn)
 	ss = append(ss, s)
 
+	if r.Rin != nil { // MH/FTB8
+		for _, rin := range r.Rin {
+			s = fmt.Sprintf("%s%d RIN %s", indent(r.Level+1), r.Level+1, rin)
+			ss = append(ss, s)
+		}
+	}
+
 	if r.Name != "" {
 		s = fmt.Sprintf("%s%d NAME %s", indent(r.Level+1), r.Level+1, r.Name)
 		ss = append(ss, s)
@@ -2680,6 +3001,12 @@ func (r *SystemRecord) String() string {
 	if r.SourceData != nil {
 		s = r.SourceData.String()
 		ss = append(ss, s)
+	}
+
+	if r.RtlSave_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _RTLSAVE %s", indent(r.Level+1), r.Level+1, r.RtlSave_)
+		ss = append(ss, s)
+
 	}
 
 	return strings.Join(ss, "\n")

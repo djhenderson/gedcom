@@ -8,6 +8,7 @@ package gedcom
 import (
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -57,6 +58,7 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 			default:
 				s.parseState = stateError
 				err = fmt.Errorf("Found non-whitespace before level")
+				log.Println(err.Error())
 				return
 			}
 		case stateLevel:
@@ -67,6 +69,7 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 				parsedLevel, perr := strconv.ParseInt(string(data[s.tokenStart:i]), 10, 64)
 				if perr != nil {
 					err = perr
+					log.Println(err.Error())
 					return
 				}
 				s.level = int(parsedLevel)
@@ -74,6 +77,7 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 			default:
 				s.parseState = stateError
 				err = fmt.Errorf("Level contained non-numerics")
+				log.Println(err.Error())
 				return
 			}
 
@@ -87,6 +91,7 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 			default:
 				s.parseState = stateError
 				err = fmt.Errorf("Tag \"%s\" contained non-alphanumeric", string(data[s.tokenStart:i]))
+				log.Println(err.Error())
 				return
 			}
 		case stateSeekTagOrXref:
@@ -102,6 +107,7 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 			default:
 				s.parseState = stateError
 				err = fmt.Errorf("Xref \"%s\" contained non-alphanumeric", string(data[s.tokenStart:i]))
+				log.Println(err.Error())
 				return
 			}
 
@@ -114,12 +120,13 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 				s.parseState = stateEnd
 				offset = i
 				return
-			case c == ' ':
+			case (c == ' ') || (c == '\t'):
 				s.tag = data[s.tokenStart:i]
 				s.parseState = stateSeekValue
 			default:
 				s.parseState = stateError
 				err = fmt.Errorf("Tag contained non-alphanumeric")
+				log.Println(err.Error())
 				return
 			}
 
@@ -133,6 +140,7 @@ func (s *scanner) nextTag(data []byte) (offset int, err error) {
 			default:
 				s.parseState = stateError
 				err = fmt.Errorf("Xref contained non-alphanumeric")
+				log.Println(err.Error())
 				return
 			}
 		case stateSeekValue:

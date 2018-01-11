@@ -41,36 +41,42 @@ func (d *Decoder) Decode() (*RootRecord, error) {
 
 	r := &RootRecord{
 		Level:            -1,
-		Place:            make(PlaceRecords, 0),
+		Album:            make(AlbumRecords, 0), // MH/FTB8
+		ChildStatus:      make(ChildStatusRecords, 0),
 		Event:            make(EventRecords, 0),
-		Individual:       make(IndividualRecords, 0),
+		EventDefinition_: make(EventDefinitionRecords, 0), // AQ14, RM6
 		Family:           make(FamilyRecords, 0),
-		Repository:       make(RepositoryRecords, 0),
-		Source:           make(SourceRecords, 0),
+		Individual:       make(IndividualRecords, 0),
 		Media:            make(MediaRecords, 0),
 		Note:             make(NoteRecords, 0),
-		PlaceDefinition_: make(PlaceDefinitionRecords, 0),
-		EventDefinition_: make(EventDefinitionRecords, 0),
-		Todo_:            make(TodoRecords, 0),
-		ChildStatus:      make(ChildStatusRecords, 0),
+		Place:            make(PlaceRecords, 0),
+		PlaceDefinition_: make(PlaceDefinitionRecords, 0), // Leg8
+		Repository:       make(RepositoryRecords, 0),
+		Source:           make(SourceRecords, 0),
 		Submission:       make(SubmissionRecords, 0),
 		Submitter:        make(SubmitterRecords, 0),
+		Todo_:            make(TodoRecords, 0), // AQ15
 	}
 
 	d.refs = make(map[string]interface{})
 	d.parsers = []parser{makeRootParser(d, r)}
-	d.scan(r)
+	err := d.scan(r)
+	if err != nil {
+		log.Println(err.Error())
+	}
 
-	return r, nil
+	return r, err
 }
 
-func (d *Decoder) scan(r *RootRecord) {
+func (d *Decoder) scan(r *RootRecord) (err error) {
 	s := &scanner{}
 	buf := make([]byte, 512)
 
-	n, err := d.r.Read(buf)
+	var n int
+	n, err = d.r.Read(buf)
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Fatalf("Fatal: at %d: %s\n", d.LineNum, err.Error())
+		return
 	}
 
 	for n > 0 {
@@ -79,12 +85,14 @@ func (d *Decoder) scan(r *RootRecord) {
 		for {
 			s.reset()
 			d.LineNum += 1
-			offset, err := s.nextTag(buf[pos:n])
+			var offset int
+			offset, err = s.nextTag(buf[pos:n])
 			pos += offset
 			if err != nil {
-				if err != io.EOF {
-					log.Println(err.Error())
-					return
+				if err == io.EOF {
+					err = nil
+				} else {
+					log.Printf("Error: at %d: %s\n", d.LineNum, err.Error())
 				}
 				break
 			}
@@ -103,15 +111,21 @@ func (d *Decoder) scan(r *RootRecord) {
 		rest := copy(buf, buf[pos:])
 
 		// top up buffer
-		num, err := d.r.Read(buf[rest:len(buf)])
+		var num int
+		num, err = d.r.Read(buf[rest:len(buf)])
 		if err != nil {
+			if err == io.EOF {
+				err = nil
+			} else {
+				log.Println(err.Error())
+			}
 			break
 		}
 
 		n = rest + num - 1
 
 	}
-
+	return
 }
 
 type parser func(level int, tag string, value string, xref string) error
@@ -150,6 +164,21 @@ func (d *Decoder) FindSource(xref string) *SourceRecord {
 }
 
 // Level 0 record constructors
+
+// album finds or creates a level 0 AlbumRecord
+func (d *Decoder) album(xref string) *AlbumRecord {
+	if xref == "" {
+		return &AlbumRecord{}
+	}
+
+	ref, found := d.refs[xref].(*AlbumRecord)
+	if !found {
+		rec := &AlbumRecord{Xref: xref}
+		d.refs[rec.Xref] = rec
+		return rec
+	}
+	return ref
+}
 
 // attribute finds or creates a level 0 AttributeRecord or a link to one
 func (d *Decoder) XXattribute(xref string) *AttributeRecord {
@@ -316,6 +345,21 @@ func (d *Decoder) placeDefinition(xref string) *PlaceDefinitionRecord {
 	return ref
 }
 
+// publish finds or creates a level 0 PublishRecord
+func (d *Decoder) publish(xref string) *PublishRecord {
+	if xref == "" {
+		return &PublishRecord{}
+	}
+
+	ref, found := d.refs[xref].(*PublishRecord)
+	if !found {
+		rec := &PublishRecord{Xref: xref}
+		d.refs[rec.Xref] = rec
+		return rec
+	}
+	return ref
+}
+
 // repository finds or creates a level 0 RepositoryRecord
 func (d *Decoder) repository(xref string) *RepositoryRecord {
 	if xref == "" {
@@ -448,7 +492,9 @@ func makeAddressParser(d *Decoder, r *AddressRecord, minLevel int) parser {
 			r.Country = value
 
 		case "PHON":
-			r.Phone = value
+			rec := &PhoneRecord{Level: level, Phone: value}
+			r.Phone = append(r.Phone, rec)
+			d.pushParser(makePhoneParser(d, rec, level))
 
 		case "_NAME": // AQ14
 			r.Name_ = value
@@ -459,19 +505,53 @@ func makeAddressParser(d *Decoder, r *AddressRecord, minLevel int) parser {
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Address tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Address tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeAlbumParser returns a parser for an AlbumRecord (MH/FTB8)
+func makeAlbumParser(d *Decoder, r *AlbumRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "RIN":
+			r.Rin = append(r.Rin, value)
+
+		case "TITL":
+			r.Title = value
+
+		case "_PHOTO":
+			rec := &PhotoRecord{Level: level}
+			r.Photo_ = append(r.Photo_, rec)
+			d.pushParser(makePhotoParser(d, rec, level))
+
+		default:
+			log.Printf("unhandled Album tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+// makeAttributeParser returns a parser for an AttributeRecord
 func makeAttributeParser(d *Decoder, r *AttributeRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
 		}
 		switch tag {
+
+		case "_UID": // MH/FTB8
+			r.UniqueId_ = append(r.UniqueId_, value)
+
+		case "RIN": // MH/FTB8
+			r.Rin = append(r.Rin, value)
 
 		case "TYPE":
 			r.Type = value
@@ -523,7 +603,9 @@ func makeAttributeParser(d *Decoder, r *AttributeRecord, minLevel int) parser {
 			//			d.pushParser(makeAddressParser(d, rec, level))
 
 			//		case "PHON":
-			//			r.Phone = append(r.Phone, value)
+			//			rec := &PhoneRecord{Level: level, Phone: value}
+			//			r.Phone = append(r.Phone, rec)
+			//			d.pushParser(makePhoneParser(d, rec, level))
 
 			//		case "FAMC":
 			//			rec := &FamilyLink{Level: level, Tag: tag, Value: value}
@@ -604,13 +686,14 @@ func makeAttributeParser(d *Decoder, r *AttributeRecord, minLevel int) parser {
 			//			r.UpdateTime_ = value
 
 		default:
-			log.Printf("unhandled Attribute tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Attribute tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeAuthorParser returns a parser for an AuthorRecord
 func makeAuthorParser(d *Decoder, r *AuthorRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -632,7 +715,7 @@ func makeAuthorParser(d *Decoder, r *AuthorRecord, minLevel int) parser {
 			r.Abbreviation = value
 
 		default:
-			log.Printf("unhandled Author tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Author tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -652,7 +735,7 @@ func makeBibliographyParser(d *Decoder, r *BibliographyRecord, minLevel int) par
 			d.pushParser(makeTextParser(d, &r.Component[len(r.Component)-1], level))
 
 		default:
-			log.Printf("unhandled bibliography record tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled bibliography record tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -678,7 +761,7 @@ func makeBlobParser(d *Decoder, r *BlobRecord, minLevel int) parser {
 			r.Data = r.Data + value
 
 		default:
-			log.Printf("unhandled Blob tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Blob tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -699,13 +782,15 @@ func makeBusinessParser(d *Decoder, r *BusinessRecord, minLevel int) parser {
 			d.pushParser(makeAddressParser(d, rec, level))
 
 		case "PHON":
-			r.Phone = append(r.Phone, value)
+			rec := &PhoneRecord{Level: level, Phone: value}
+			r.Phone = append(r.Phone, rec)
+			d.pushParser(makePhoneParser(d, rec, level))
 
 		case "WWW":
 			r.WebSite = value
 
 		default:
-			log.Printf("unhandled Business tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Business tagat %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -724,7 +809,7 @@ func makeCallNumberParser(d *Decoder, r *CallNumberRecord, minLevel int) parser 
 			r.Media = value
 
 		default:
-			log.Printf("unhandled CallNumber tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled CallNumber tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -750,13 +835,14 @@ func makeChangeParser(d *Decoder, r *ChangeRecord, minLevel int) parser {
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Change tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Change tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeCharacterSetParser returns a parser for an CharacterSetRecord
 func makeCharacterSetParser(d *Decoder, r *CharacterSetRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -768,13 +854,14 @@ func makeCharacterSetParser(d *Decoder, r *CharacterSetRecord, minLevel int) par
 			r.Version = value
 
 		default:
-			log.Printf("unhandled CharacterSet tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled CharacterSet tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeChildStatusParser returns a parser for an ChildStatusRecord
 func makeChildStatusParser(d *Decoder, r *ChildStatusRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -786,13 +873,14 @@ func makeChildStatusParser(d *Decoder, r *ChildStatusRecord, minLevel int) parse
 			r.Name = value
 
 		default:
-			log.Printf("unhandled ChildStatus tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled ChildStatus tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeCitationParser returns a parser for an CitationRecord
 func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -809,6 +897,9 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 
 		case "CONC":
 			r.Value = r.Value + value
+
+		case "RIN": // MH/FTB8
+			r.Rin = append(r.Rin, value)
 
 		case "PAGE":
 			r.Page = value
@@ -879,13 +970,14 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 			// TODO
 
 		default:
-			log.Printf("unhandled Citation tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Citation tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeDataParser returns a parser for an DataRecord
 func makeDataParser(d *Decoder, r *DataRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -917,13 +1009,14 @@ func makeDataParser(d *Decoder, r *DataRecord, minLevel int) parser {
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Data tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Data tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeDateParser returns a parser for an DateRecord
 func makeDateParser(d *Decoder, r *DateRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -953,14 +1046,18 @@ func makeDateParser(d *Decoder, r *DateRecord, minLevel int) parser {
 		case "DATS":
 			r.Short = value
 
+		case "_TIMEZONE": // MH/FTB8
+			r.TimeZone_ = value
+
 		default:
-			log.Printf("unhandled Date tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Date tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeEventDefinitionParser returns a parser for an EventDefinitionRecord
 func makeEventDefinitionParser(d *Decoder, r *EventDefinitionRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1004,19 +1101,26 @@ func makeEventDefinitionParser(d *Decoder, r *EventDefinitionRecord, minLevel in
 			// TODO
 
 		default:
-			log.Printf("unhandled Event Definition tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Event Definition tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeEventParser returns a parser for an EventRecord
 func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
 		}
 		switch tag {
+
+		case "_UID":
+			r.UniqueId_ = append(r.UniqueId_, value)
+
+		case "RIN": // MH/FTB8
+			r.Rin = append(r.Rin, value)
 
 		case "TYPE":
 			r.Type = value
@@ -1056,6 +1160,9 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 		case "_Description2": // AQ14
 			r.Description2_ = value
 
+		case "AGE": // MH/FTB8
+			r.Age = value
+
 		case "ROLE": // This is a kind of IndividualLink
 			indi := d.individual(stripXref(value))
 			rec := &RoleRecord{Level: level, Role: stripValue(value), Individual: indi}
@@ -1068,7 +1175,9 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 			d.pushParser(makeAddressParser(d, rec, level))
 
 		case "PHON":
-			r.Phone = append(r.Phone, value)
+			rec := &PhoneRecord{Level: level, Phone: value}
+			r.Phone = append(r.Phone, rec)
+			d.pushParser(makePhoneParser(d, rec, level))
 
 		case "FAMC":
 			rec := &FamilyLink{Level: level, Tag: tag, Value: value}
@@ -1121,9 +1230,6 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 				d.pushParser(makeMediaParser(d, rec, level))
 			}
 
-		case "_UID":
-			r.UniqueId_ = append(r.UniqueId_, value)
-
 		case "RecordInternal":
 			r.RecordInternal = value
 
@@ -1149,13 +1255,14 @@ func makeEventParser(d *Decoder, r *EventRecord, minLevel int) parser {
 			r.UpdateTime_ = value
 
 		default:
-			log.Printf("unhandled Event tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Event tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeFamilyLinkParser returns a parser for an FamilyLink
 func makeFamilyLinkParser(d *Decoder, r *FamilyLink, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1194,19 +1301,23 @@ func makeFamilyLinkParser(d *Decoder, r *FamilyLink, minLevel int) parser {
 			d.pushParser(makeCitationParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Family Link tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Family Link tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeFamilyParser returns a parser for an FamilyRecord
 func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
 		}
 		switch tag {
+
+		case "RIN":
+			r.Rin = append(r.Rin, value)
 
 		case "_STAT": // AQ14
 			r.Status_ = value
@@ -1294,12 +1405,13 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 			r.UpdateTime_ = value
 
 		default:
-			log.Printf("unhandled Family tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Family tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 		return nil
 	}
 }
 
+// makeFootnoteParser returns a parser for an FootnoteRecord
 func makeFootnoteParser(d *Decoder, r *FootnoteRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1312,13 +1424,14 @@ func makeFootnoteParser(d *Decoder, r *FootnoteRecord, minLevel int) parser {
 			d.pushParser(makeTextParser(d, &r.Component[len(r.Component)-1], level))
 
 		default:
-			log.Printf("unhandled Footnote tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Footnote tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeGedcomParser returns a parser for an GedcomRecord
 func makeGedcomParser(d *Decoder, r *GedcomRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1333,12 +1446,13 @@ func makeGedcomParser(d *Decoder, r *GedcomRecord, minLevel int) parser {
 			r.Form = value
 
 		default:
-			log.Printf("unhandled Gedcom tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Gedcom tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 		return nil
 	}
 }
 
+// makeHeaderParser returns a parser for an HeaderRecord
 func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1377,6 +1491,21 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 
 		case "FILE":
 			r.FileName = value
+
+		case "_RINS": // MH/FTB8
+			r.Rins_ = value
+
+		case "_UID": // MH/FTB8
+			r.Uid_ = value
+
+		case "_PROJECT_GUID": // MH/FTB8
+			r.ProjectGuid_ = value
+
+		case "_EXPORTED_FROM_SITE_ID": // MH/FTB8
+			r.ExportedFromSiteId_ = value
+
+		case "_DESCRIPTION_AWARE": // MH/FTB8
+			r.DescriptionAware_ = value
 
 		case "COPR":
 			r.Copyright = value
@@ -1419,12 +1548,13 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 			r.HomePerson_ = rec
 
 		default:
-			log.Printf("unhandled Header tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Header tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 		return nil
 	}
 }
 
+// makeHistoryParser returns a parser for an HistoryRecord
 func makeHistoryParser(d *Decoder, r *HistoryRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1448,13 +1578,14 @@ func makeHistoryParser(d *Decoder, r *HistoryRecord, minLevel int) parser {
 			d.pushParser(makeCitationParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled History tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled History tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeIndividualLinkParser returns a parser for an IndividualLink
 func makeIndividualLinkParser(d *Decoder, r *IndividualLink, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1487,19 +1618,23 @@ func makeIndividualLinkParser(d *Decoder, r *IndividualLink, minLevel int) parse
 			r.Preferred_ = value
 
 		default:
-			log.Printf("unhandled Individual Link tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Individual Link tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeIndividualParser returns a parser for an IndividualRecord
 func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
 		}
 		switch tag {
+
+		case "RIN":
+			r.Rin = append(r.Rin, value)
 
 		case "NAME":
 			rec := &NameRecord{Level: level, Name: value}
@@ -1662,7 +1797,9 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			r.Mother = rec
 
 		case "PHON":
-			r.Phone = append(r.Phone, value)
+			rec := &PhoneRecord{Level: level, Phone: value}
+			r.Phone = append(r.Phone, rec)
+			d.pushParser(makePhoneParser(d, rec, level))
 
 		case "MISC":
 			r.Miscellaneous = append(r.Miscellaneous, value)
@@ -1685,12 +1822,13 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			r.Todo_ = append(r.Todo_, value)
 
 		default:
-			log.Printf("unhandled Individual tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Individual tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 		return nil
 	}
 }
 
+// makeMediaLinkParser returns a parser for an MediaLink
 func makeMediaLinkParser(d *Decoder, r *MediaLink, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1699,7 +1837,7 @@ func makeMediaLinkParser(d *Decoder, r *MediaLink, minLevel int) parser {
 		switch tag {
 
 		default:
-			log.Printf("unhandled MediaLink tag: %d %s %s\r", level, tag, value)
+			log.Printf("unhandled MediaLink tag at %d: %d %s %s\r", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -1773,7 +1911,7 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 			d.pushParser(makeUserReferenceNumberParser(d, rec, level))
 
 		case "RecordInternal":
-			r.Rin = value
+			r.RecordInternal = value
 
 		case "CHAN":
 			rec := &ChangeRecord{Level: level}
@@ -1797,6 +1935,27 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 			r.Sshow_ = rec
 			d.pushParser(makeSlideShowParser(d, rec, level))
 
+		case "_PRIM_CUTOUT": // MH/FTB8
+			r.PrimCutout_ = value
+
+		case "_CUTOUT": // MH/FTB8
+			r.Cutout_ = value
+
+		case "_POSITION": // MH/FTB8
+			r.Position_ = value
+
+		case "_ALBUM": // MH/FTB8
+			r.Album_ = value
+
+		case "_PHOTO_RIN": // MH/FTB8
+			r.PhotoRin_ = value
+
+		case "_FILESIZE": // MH/FTB8
+			r.Filesize_ = value
+
+		case "_PARENTRIN": // MH/FTB8
+			r.ParentRin_ = value
+
 		case "OBJE":
 			if value != "" {
 				media := d.media(stripXref(value))
@@ -1814,13 +1973,14 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 			r.SrcFlip_ = value
 
 		default:
-			log.Printf("unhandled Media tag: %d %s %s\r", level, tag, value)
+			log.Printf("unhandled Media tag at %d: %d %s %s\r", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeNameParser returns a parser for an NameRecord
 func makeNameParser(d *Decoder, r *NameRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1855,7 +2015,10 @@ func makeNameParser(d *Decoder, r *NameRecord, minLevel int) parser {
 		case "FONE":
 			r.PhoneticName = value
 
-		case "_MARNM": // AQ14
+		case "_FORMERNAME": // MH/FTB8
+			r.FormerName_ = value
+
+		case "_MARNM": // AQ14, MH/FTB8
 			r.MarriedName_ = value
 
 		case "TYPE":
@@ -1881,13 +2044,14 @@ func makeNameParser(d *Decoder, r *NameRecord, minLevel int) parser {
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Name tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Name tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeNoteParser returns a parser for an NoteRecord
 func makeNoteParser(d *Decoder, r *NoteRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1923,14 +2087,18 @@ func makeNoteParser(d *Decoder, r *NoteRecord, minLevel int) parser {
 			r.Change = rec
 			d.pushParser(makeChangeParser(d, rec, level))
 
+		case "_DESCRIPTION": // MH/FTB8
+			r.Description_ = value
+
 		default:
-			log.Printf("unhandled Note tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Note tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makePedigreeParser returns a parser for an PedigreeRecord
 func makePedigreeParser(d *Decoder, r *PedigreeRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1945,13 +2113,55 @@ func makePedigreeParser(d *Decoder, r *PedigreeRecord, minLevel int) parser {
 			r.Wife_ = value
 
 		default:
-			log.Printf("unhandled Pedigree tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Pedigree tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makePhoneParser returns a parser for an PhoneRecord
+func makePhoneParser(d *Decoder, r *PhoneRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "_TYPE": // MH/FTB8
+			r.Type_ = value
+
+		default:
+			log.Printf("unhandled Phone tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+// makePhotoParser returns a parser for an PhotoRecord (MH/FTB8)
+func makePhotoParser(d *Decoder, r *PhotoRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "_UID":
+			r.Uid_ = value
+
+		case "_PRIN":
+			r.Prin_ = value
+
+		default:
+			log.Printf("unhandled Photo tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+// makePlaceDefinitionParser returns a parser for an PlaceDefinitionRecord
 func makePlaceDefinitionParser(d *Decoder, r *PlaceDefinitionRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1966,13 +2176,14 @@ func makePlaceDefinitionParser(d *Decoder, r *PlaceDefinitionRecord, minLevel in
 			r.Abbreviation = value
 
 		default:
-			log.Printf("unhandled Place Definition tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Place Definition tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makePlacePartParser returns a parser for an PlacePartRecord
 func makePlacePartParser(d *Decoder, r *PlacePartRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -1984,13 +2195,14 @@ func makePlacePartParser(d *Decoder, r *PlacePartRecord, minLevel int) parser {
 			r.Jurisdiction = value
 
 		default:
-			log.Printf("unhandled Place Part tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Place Part tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makePlaceParser returns a parser for an PlaceRecord
 func makePlaceParser(d *Decoder, r *PlaceRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2028,13 +2240,45 @@ func makePlaceParser(d *Decoder, r *PlaceRecord, minLevel int) parser {
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Place tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Place tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makePublishParser returns a parser for an PublishRecord
+func makePublishParser(d *Decoder, r *PublishRecord, minLevel int) parser {
+	return func(level int, tag string, value string, xref string) error {
+		if level <= minLevel {
+			return d.popParser(level, tag, value, xref)
+		}
+		switch tag {
+
+		case "_SITEADDRESS":
+			r.SiteAddress_ = value
+
+		case "_SITENAME":
+			r.SiteName_ = value
+
+		case "_SITEID":
+			r.SiteId_ = value
+
+		case "_USERNAME":
+			r.UserName_ = value
+
+		case "_DISABLED":
+			r.Disabled_ = value
+
+		default:
+			log.Printf("unhandled Publish_ tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
+		}
+
+		return nil
+	}
+}
+
+// makeRepositoryLinkParser returns a parser for an RepositoryLink
 func makeRepositoryLinkParser(d *Decoder, r *RepositoryLink, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2053,13 +2297,14 @@ func makeRepositoryLinkParser(d *Decoder, r *RepositoryLink, minLevel int) parse
 			d.pushParser(makeNoteParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Repository Link tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Repository Link tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeRepositoryParser returns a parser for an RepositoryRecord
 func makeRepositoryParser(d *Decoder, r *RepositoryRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2076,7 +2321,9 @@ func makeRepositoryParser(d *Decoder, r *RepositoryRecord, minLevel int) parser 
 			d.pushParser(makeAddressParser(d, rec, level))
 
 		case "PHON":
-			r.Phone = append(r.Phone, value)
+			rec := &PhoneRecord{Level: level, Phone: value}
+			r.Phone = append(r.Phone, rec)
+			d.pushParser(makePhoneParser(d, rec, level))
 
 		case "WWW":
 			r.WebSite = value
@@ -2100,13 +2347,14 @@ func makeRepositoryParser(d *Decoder, r *RepositoryRecord, minLevel int) parser 
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Repository tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Repository tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeRoleParser returns a parser for an RoleRecord
 func makeRoleParser(d *Decoder, r *RoleRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2118,13 +2366,14 @@ func makeRoleParser(d *Decoder, r *RoleRecord, minLevel int) parser {
 			r.Principal = value
 
 		default:
-			log.Printf("unhandled Role tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Role tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeRootParser returns a parser for an RootRecord
 func makeRootParser(d *Decoder, r *RootRecord) parser {
 	return func(level int, tag string, value string, xref string) error {
 		//log.Println(level, tag, value, xref)
@@ -2214,6 +2463,16 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 				r.Submission = append(r.Submission, rec)
 				d.pushParser(makeSubmissionParser(d, rec, level))
 
+			case "ALBUM": // MN/FTB8
+				rec := d.album(xref)
+				r.Album = append(r.Album, rec)
+				d.pushParser(makeAlbumParser(d, rec, level))
+
+			case "_PUBLISH": // MN/FTB8
+				rec := d.publish(xref)
+				r.Publish_ = append(r.Publish_, rec)
+				d.pushParser(makePublishParser(d, rec, level))
+
 			case "HEAD":
 				rec := d.header(xref)
 				r.Header = rec
@@ -2226,15 +2485,16 @@ func makeRootParser(d *Decoder, r *RootRecord) parser {
 				//d.pushParser(makeTrailerParser(d, obj, level))
 
 			default:
-				log.Printf("unhandled Root tag: %d @%s@ %s %s\n", level, xref, tag, value)
+				log.Printf("unhandled Root tag at %d: %d @%s@ %s %s\n", d.LineNum, level, xref, tag, value)
 			}
 		} else {
-			log.Printf("Not level 0 Root tag: %d @%s@ %s %s\n", level, xref, tag, value)
+			log.Printf("Not level 0 Root tag at %d: %d @%s@ %s %s\n", d.LineNum, level, xref, tag, value)
 		}
 		return nil
 	}
 }
 
+// makeSchemaParser returns a parser for an SchemaRecord
 func makeSchemaParser(d *Decoder, r *SchemaRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2249,13 +2509,14 @@ func makeSchemaParser(d *Decoder, r *SchemaRecord, minLevel int) parser {
 			r.Data = append(r.Data, s)
 
 		default:
-			log.Printf("unhandled Schema tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Schema tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeShortTitleParser returns a parser for an ShortTitleRecord
 func makeShortTitleParser(d *Decoder, r *ShortTitleRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2267,13 +2528,14 @@ func makeShortTitleParser(d *Decoder, r *ShortTitleRecord, minLevel int) parser 
 			r.Indexed = value
 
 		default:
-			log.Printf("unhandled Short Title tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Short Title tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSlideShowParser returns a parser for an SlideShowRecord
 func makeSlideShowParser(d *Decoder, r *SlideShowRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2285,13 +2547,14 @@ func makeSlideShowParser(d *Decoder, r *SlideShowRecord, minLevel int) parser {
 			r.ShowTime_ = value
 
 		default:
-			log.Printf("unhandled Slide Show tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Slide Show tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSourceParser returns a parser for an SourceRecord
 func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2308,6 +2571,9 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 
 		case "CONC":
 			r.Value = r.Value + value
+
+		case "RIN": // MH/FT8
+			r.Rin = append(r.Rin, value)
 
 		case "NAME":
 			r.Name = value
@@ -2335,6 +2601,9 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 
 		case "_PAREN":
 			r.Parenthesized_ = value
+
+		case "_MEDI": // MH/FTB8
+			r.Medi_ = value
 
 		case "_TYPE":
 			r.Type_ = value
@@ -2424,13 +2693,14 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			// TODO
 
 		default:
-			log.Printf("unhandled Source tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Source tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSubmissionLinkParser returns a parser for an SubmissionLink
 func makeSubmissionLinkParser(d *Decoder, r *SubmissionLink, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2439,13 +2709,14 @@ func makeSubmissionLinkParser(d *Decoder, r *SubmissionLink, minLevel int) parse
 		switch tag {
 
 		default:
-			log.Printf("unhandled Submission Link tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Submission Link tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSubmissionParser returns a parser for an SubmissionRecord
 func makeSubmissionParser(d *Decoder, r *SubmissionRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2477,13 +2748,14 @@ func makeSubmissionParser(d *Decoder, r *SubmissionRecord, minLevel int) parser 
 			r.RecordInternal = value
 
 		default:
-			log.Printf("unhandled Submission tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Submission tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSubmitterLinkParser returns a parser for an SubmitterLink
 func makeSubmitterLinkParser(d *Decoder, r *SubmitterLink, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2492,19 +2764,23 @@ func makeSubmitterLinkParser(d *Decoder, r *SubmitterLink, minLevel int) parser 
 		switch tag {
 
 		default:
-			log.Printf("unhandled Submitter Link tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Submitter Link tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSubmitterParser returns a parser for an SubmitterRecord
 func makeSubmitterParser(d *Decoder, r *SubmitterRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
 			return d.popParser(level, tag, value, xref)
 		}
 		switch tag {
+
+		case "RIN": // MH/FTB8
+			r.Rin = append(r.Rin, value)
 
 		case "NAME":
 			r.Name = value
@@ -2519,7 +2795,9 @@ func makeSubmitterParser(d *Decoder, r *SubmitterRecord, minLevel int) parser {
 			r.Country = value
 
 		case "PHON":
-			r.Phone = append(r.Phone, value)
+			rec := &PhoneRecord{Level: level, Phone: value}
+			r.Phone = append(r.Phone, rec)
+			d.pushParser(makePhoneParser(d, rec, level))
 
 		case "EMAIL":
 			r.Email = value
@@ -2564,13 +2842,14 @@ func makeSubmitterParser(d *Decoder, r *SubmitterRecord, minLevel int) parser {
 			d.pushParser(makeChangeParser(d, rec, level))
 
 		default:
-			log.Printf("unhandled Submitter tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Submitter tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeSystemParser returns a parser for an SystemRecord
 func makeSystemParser(d *Decoder, r *SystemRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2594,13 +2873,17 @@ func makeSystemParser(d *Decoder, r *SystemRecord, minLevel int) parser {
 			r.SourceData = rec
 			d.pushParser(makeDataParser(d, rec, level))
 
+		case "_RTLSAVE": // MH/FTB8
+			r.RtlSave_ = value
+
 		default:
-			log.Printf("unhandled System tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled System tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 		return nil
 	}
 }
 
+// makeTextParser returns a parser for an string
 func makeTextParser(d *Decoder, s *string, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2620,13 +2903,14 @@ func makeTextParser(d *Decoder, s *string, minLevel int) parser {
 			*s = *s + value
 
 		default:
-			log.Printf("unhandled Text tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Text tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeTitleParser returns a parser for an TitleRecord
 func makeTitleParser(d *Decoder, r *TitleRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2638,13 +2922,14 @@ func makeTitleParser(d *Decoder, r *TitleRecord, minLevel int) parser {
 			r.Abbreviation = value
 
 		default:
-			log.Printf("unhandled Title tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Title tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeTodoParser returns a parser for an TodoRecord
 func makeTodoParser(d *Decoder, r *TodoRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2674,13 +2959,14 @@ func makeTodoParser(d *Decoder, r *TodoRecord, minLevel int) parser {
 			r.Date2_ = value
 
 		default:
-			log.Printf("unhandled Todo tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled Todo tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
 	}
 }
 
+// makeUserReferenceNumberParser returns a parser for an UserReferenceNumberRecord
 func makeUserReferenceNumberParser(d *Decoder, r *UserReferenceNumberRecord, minLevel int) parser {
 	return func(level int, tag string, value string, xref string) error {
 		if level <= minLevel {
@@ -2692,7 +2978,7 @@ func makeUserReferenceNumberParser(d *Decoder, r *UserReferenceNumberRecord, min
 			r.Type = value
 
 		default:
-			log.Printf("unhandled UserReferenceNumber tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled UserReferenceNumber tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
@@ -2724,7 +3010,7 @@ func makeWebTagParser(d *Decoder, r *WebTagRecord, minLevel int) parser {
 			r.URL = value
 
 		default:
-			log.Printf("unhandled WebTag tag: %d %s %s\n", level, tag, value)
+			log.Printf("unhandled WebTag tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
 
 		return nil
