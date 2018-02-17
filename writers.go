@@ -430,8 +430,8 @@ func (r *BibliographyRecord) Write(w io.Writer) (nbytes int, err error) {
 	n, err = WriteLineN(w, r.Level, "BIBL", r.Value)
 	nbytes += n
 
-	for _, comp := range r.Component {
-		n, err = LongWrite(w, r.Level+1, "", "COMP", comp)
+	if r.Component != "" {
+		n, err = LongWrite(w, r.Level+1, "", "COMP", r.Component)
 		nbytes += n
 	}
 
@@ -606,11 +606,9 @@ func (r *CitationRecord) Write(w io.Writer) (nbytes int, err error) {
 		}
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			n, err = LongWrite(w, r.Level+1, "", "TEXT", text)
-			nbytes += n
-		}
+	if r.Text != "" {
+		n, err = LongWrite(w, r.Level+1, "", "TEXT", r.Text)
+		nbytes += n
 	}
 
 	if r.Quality != "" {
@@ -678,6 +676,21 @@ func (r *DataRecord) Write(w io.Writer) (nbytes int, err error) {
 	n, err = LongWrite(w, r.Level, "", "DATA", r.Data)
 	nbytes += n
 
+	if r.Event != nil {
+		n, err = r.Event.Write(w)
+		nbytes += n
+	}
+
+	if r.Agency != "" {
+		n, err = WriteLineNp1(w, r.Level, "AGNC", r.Agency)
+		nbytes += n
+	}
+
+	if r.Note != nil {
+		n, err = r.Note.Write(w)
+		nbytes += n
+	}
+
 	if r.Date != "" {
 		n, err = WriteLineNp1(w, r.Level, "DATE", r.Date)
 		nbytes += n
@@ -688,11 +701,9 @@ func (r *DataRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			n, err = LongWrite(w, r.Level+1, "", "TEXT", text)
-			nbytes += n
-		}
+	if r.Text != "" {
+		n, err = LongWrite(w, r.Level+1, "", "TEXT", r.Text)
+		nbytes += n
 	}
 
 	return nbytes, err
@@ -753,11 +764,10 @@ func (r *DateRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			n, err = LongWrite(w, r.Level+1, "", "TEXT", text)
-			nbytes += n
-		}
+	if r.Text != "" {
+		n, err = LongWrite(w, r.Level+1, "", "TEXT", r.Text)
+		nbytes += n
+
 	}
 
 	return nbytes, err
@@ -1176,8 +1186,8 @@ func (r *FootnoteRecord) Write(w io.Writer) (nbytes int, err error) {
 	n, err = WriteLineN(w, r.Level, "FOOT", r.Value)
 	nbytes += n
 
-	for _, comp := range r.Component {
-		n, err = LongWrite(w, r.Level+1, "", "COMP", comp)
+	if r.Component != "" {
+		n, err = LongWrite(w, r.Level+1, "", "COMP", r.Component)
 		nbytes += n
 	}
 
@@ -1437,11 +1447,6 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	if r.ProfilePicture_ != nil {
 		n, err = r.ProfilePicture_.Write(w)
-		nbytes += n
-	}
-
-	if r.CONL != "" {
-		n, err = WriteLineNp1(w, r.Level, "CONL", r.CONL)
 		nbytes += n
 	}
 
@@ -2638,11 +2643,9 @@ func (r *SourceRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			n, err = LongWrite(w, r.Level+1, "", "TEXT", text)
-			nbytes += n
-		}
+	if r.Text != "" {
+		n, err = LongWrite(w, r.Level+1, "", "TEXT", r.Text)
+		nbytes += n
 	}
 
 	if r.Data != nil {

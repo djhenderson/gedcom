@@ -88,8 +88,9 @@ func TestIndividual(t *testing.T) {
 
 	i1 := g.Individual[0]
 
-	if i1.Xref != "PERSON1" {
-		t.Errorf(`Individual 0 xref was "%q", expected @PERSON1@`, i1.Xref)
+	if i1.Xref != "@PERSON1@" {
+		t.Logf("i1.Xref (%T) = %q\n", i1.Xref, i1.Xref)
+		t.Errorf(`Individual 0 xref was %q, expected "@PERSON1@"`, i1.Xref)
 	}
 }
 
@@ -150,9 +151,7 @@ func TestIndiName2(t *testing.T) {
 					&DataRecord{
 						Level: 3,
 						Date:  "BEF 1 JAN 1900",
-						Text: []string{
-							"a sample text\nSample text continued here. The word TEST should not be broken!",
-						},
+						Text:  "a sample text\nSample text continued here. The word TEST should not be broken!",
 					},
 				},
 				Note: NoteRecords{
@@ -249,9 +248,7 @@ func TestIndiEvents2(t *testing.T) {
 					&DataRecord{
 						Level: 3,
 						Date:  "31 DEC 1900",
-						Text: []string{
-							"a sample text\nSample text continued here. The word TEST should not be broken!",
-						},
+						Text:  "a sample text\nSample text continued here. The word TEST should not be broken!",
 					},
 				},
 				Note: []*NoteRecord{
@@ -306,34 +303,40 @@ func TestIndiAttribute2(t *testing.T) {
 		Tag:   "CAST",
 		Value: "Cast name",
 		Date: &DateRecord{
-			Date: "31 DEC 1997",
+			Level: 2,
+			Tag:   "DATE", // fix
+			Date:  "31 DEC 1997",
 		},
 		Place: &PlaceRecord{
-			Name: "The place",
+			Level: 2,
+			Tag:   "PLAC", // fix
+			Name:  "The place",
 		},
 		Citation: []*CitationRecord{
 			&CitationRecord{
+				Level:   2,
 				Value:   "@SOURCE1@",
 				Page:    "42",
 				Quality: "3",
 				Data: []*DataRecord{
 					&DataRecord{
-						Data: "31 DEC 1900",
-						Text: []string{
-							"a sample text\nSample text continued here. The word TEST should not be broken!",
-						},
+						Level: 3,
+						Date:  "31 DEC 1900",
+						Text:  "a sample text\nSample text continued here. The word TEST should not be broken!",
 					},
 				},
 				Note: []*NoteRecord{
 					&NoteRecord{
-						Note: "A note\nNote continued here. The word TEST should not be broken!",
+						Level: 3,
+						Note:  "A note\nNote continued here. The word TEST should not be broken!",
 					},
 				},
 			},
 		},
 		Note: []*NoteRecord{
 			&NoteRecord{
-				Note: "CASTE event note (the name of an individual's rank or status in society, based   on racial or religious differences, or differences in wealth, inherited   rank, profession, occupation, etc)\nNote continued here. The word TEST should not be broken!",
+				Level: 2,
+				Note:  "CASTE event note (the name of an individual's rank or status in society, based   on racial or religious differences, or differences in wealth, inherited   rank, profession, occupation, etc)\nNote continued here. The word TEST should not be broken!",
 			},
 		},
 	}
@@ -341,7 +344,7 @@ func TestIndiAttribute2(t *testing.T) {
 	if len(i1.Attribute) > 0 {
 
 		if !reflect.DeepEqual(i1.Attribute[0], att1) {
-			t.Errorf("Individual 0 attribute 0 was: %q\nExpected: %q\n",
+			t.Errorf("Individual 0 attribute 0 was: \n%q\nExpected: \n%q\n",
 				spew.Sdump(i1.Attribute[0]), spew.Sdump(att1))
 		}
 	}
@@ -370,13 +373,27 @@ func TestIndiParents2(t *testing.T) {
 	//1 CHIL @PERSON1@
 
 	fam1 := &FamilyLink{
-		Level: 2,
+		Level: 1,
 		Tag:   "FAMC",
 		Value: "@PARENTS@",
+		Note: []*NoteRecord{
+			&NoteRecord{
+				Level: 2,
+				Note:  "Note about the link to parents\nNote continued here. The word TEST should not be broken!",
+			},
+			&NoteRecord{
+				Level: 2,
+				Note:  "Another note about the link to parents\nNote continued here. The word TEST should not be broken!",
+			},
+		},
+		Pedigree: &PedigreeRecord{
+			Level:    2,
+			Pedigree: "birth",
+		},
 	}
 
 	if !reflect.DeepEqual(i1.Parents[0], fam1) {
-		t.Errorf("Family 0 parents 0 was: %q\nExpected: %q\n",
+		t.Errorf("Family 0 parents 0 was: \n%q\nExpected: \n%q\n",
 			spew.Sdump(i1.Parents[0]), spew.Sdump(fam1))
 	}
 
@@ -422,29 +439,51 @@ func TestSource2(t *testing.T) {
 
 	//0 @SOURCE1@ SOUR
 	sour1 := &SourceRecord{
-		Xref: "SOURCE1",
+		Xref:  "@SOURCE1@",
+		Title: "Title of source\nTitle continued here. The word TEST should not be broken!",
+		Author: &AuthorRecord{
+			Level:  1,
+			Author: "Author of source\nAuthor continued here. The word TEST should not be broken!",
+		},
+		Publication:  "Source publication facts\nPublication facts continued here. The word TEST should not be broken!",
+		Abbreviation: "Short title",
+		Note: NoteRecords{
+			&NoteRecord{
+				Level: 1,
+				Note:  "A note about the family\nNote continued here. The word TEST should not be broken!",
+			},
+		},
+		Text: "Citation from source\nCitation continued here. The word TEST should not be broken!",
 		Data: &DataRecord{Level: 1,
 			Event: EventRecords{
 				&EventRecord{
-					//2 EVEN BIRT, CHR
+					Level: 2,
+					Tag:   "EVEN",
+					Value: "BIRT, CHR",
 					Date: &DateRecord{
-						Tag:  "DATE",
-						Date: "FROM 1 JAN 1980 TO 1 FEB 1982",
+						Level: 3,
+						Tag:   "DATE", // fix
+						Date:  "FROM 1 JAN 1980 TO 1 FEB 1982",
 					},
 					Place: &PlaceRecord{
-						Tag:  "PLAC",
-						Name: "Place",
+						Level: 3,
+						Tag:   "PLAC", // fix
+						Name:  "Place",
 					},
 				},
 				&EventRecord{
-					//2 EVEN DEAT
+					Level: 2,
+					Tag:   "EVEN",
+					Value: "DEAT",
 					Date: &DateRecord{
-						Tag:  "DATE",
-						Date: "FROM 1 JAN 1980 TO 1 FEB 1982",
+						Level: 3,
+						Tag:   "DATE", // fix
+						Date:  "FROM 1 JAN 1980 TO 1 FEB 1982",
 					},
 					Place: &PlaceRecord{
-						Tag:  "PLAC",
-						Name: "Another place",
+						Level: 3,
+						Tag:   "PLAC", // fix
+						Name:  "Another place",
 					},
 				},
 			},
@@ -455,15 +494,6 @@ func TestSource2(t *testing.T) {
 					Note:  "A note about whatever\nNote continued here. The word TEST should not be broken!",
 				},
 			},
-		},
-		Author: &AuthorRecord{
-			Author: "Author of source\nAuthor continued here. The word TEST should not be broken!",
-		},
-		Title:        "Title of source\nTitle continued here. The word TEST should not be broken!",
-		Abbreviation: "Short title",
-		Publication:  "Source publication facts\nPublication facts continued here. The word TEST should not be broken!",
-		Text: []string{
-			"Citation from source\nCitation continued here. The word TEST should not be broken!",
 		},
 
 		Media: MediaLinks{
@@ -482,27 +512,30 @@ func TestSource2(t *testing.T) {
 				},
 			},
 		},
-		Note: NoteRecords{
-			&NoteRecord{
-				Level: 1,
-				Note:  "A note about the family\nNote continued here. The word TEST should not be broken!",
-			},
-			&NoteRecord{
-				Level: 1,
-				Note:  "A note\nNote continued here. The word TEST should not be broken!",
-			},
-		},
 		Change: &ChangeRecord{
+			Level: 1,
 			Date: &DateRecord{
-				Date: "1 APR 1998",
-				Time: "12:34:56.789",
+				Level: 2,
+				Tag:   "DATE", // fix
+				Date:  "1 APR 1998",
+				Time:  "12:34:56.789",
+			},
+			Note: NoteRecords{
+				&NoteRecord{
+					Level: 2,
+					Note:  "A note\nNote continued here. The word TEST should not be broken!",
+				},
 			},
 		},
 		//1 _MYOWNTAG This is a non-standard tag. Not recommended but allowed
 	}
 
 	if !reflect.DeepEqual(g.Source[0], sour1) {
-		t.Errorf("Family 0 parents 0 was: %q\nExpected: %q\n",
+		a1 := g.Source[0].String()
+		a2 := sour1.String()
+		t.Log(a1)
+		t.Log(a2)
+		t.Errorf("Family 0 parents 0 was: \n%q\nExpected: \n%q\n",
 			spew.Sdump(g.Source[0]), spew.Sdump(sour1))
 	}
 

@@ -98,7 +98,7 @@ func (r *AddressRecord) String() string {
 	}
 
 	if r.Phone != nil {
-		s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, r.Phone)
+		s = r.Phone.String()
 		ss = append(ss, s)
 	}
 
@@ -258,10 +258,8 @@ func (r *AttributeRecord) String() string {
 	//	}
 
 	//	if r.Phone != nil {
-	//		for _, phone := range r.Phone {
-	//			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
-	//			ss = append(ss, s)
-	//		}
+	//		s = r.Phone.String()
+	//		ss = append(ss, s)
 	//	}
 
 	//	if r.Parents != nil {
@@ -377,8 +375,8 @@ func (r *BibliographyRecord) String() string {
 	s = fmt.Sprintf("%s%d BIBL %s", indent(r.Level), r.Level, r.Value)
 	ss = append(ss, s)
 
-	for _, comp := range r.Component {
-		sas := LongString(r.Level+1, "", "COMP", comp)
+	if r.Component != "" {
+		sas := LongString(r.Level+1, "", "COMP", r.Component)
 		ss = append(ss, sas...)
 	}
 
@@ -416,10 +414,8 @@ func (r *BusinessRecord) String() string {
 	}
 
 	if r.Phone != nil {
-		for _, phone := range r.Phone {
-			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
-			ss = append(ss, s)
-		}
+		s = r.Phone.String()
+		ss = append(ss, s)
 	}
 
 	if r.WebSite != "" {
@@ -565,11 +561,9 @@ func (r *CitationRecord) String() string {
 		}
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			sas := LongString(r.Level+1, "", "TEXT", text)
-			ss = append(ss, sas...)
-		}
+	if r.Text != "" {
+		sas := LongString(r.Level+1, "", "TEXT", r.Text)
+		ss = append(ss, sas...)
 	}
 
 	if r.CONS != "" {
@@ -641,6 +635,21 @@ func (r *DataRecord) String() string {
 	sas := LongString(r.Level, "", "DATA", r.Data)
 	ss = append(ss, sas...)
 
+	if r.Event != nil {
+		s = r.Event.String()
+		ss = append(ss, s)
+	}
+
+	if r.Agency != "" {
+		s = fmt.Sprintf("%s%d AGNC %s", indent(r.Level+1), r.Level+1, r.Agency)
+		ss = append(ss, s)
+	}
+
+	if r.Note != nil {
+		s = r.Note.String()
+		ss = append(ss, s)
+	}
+
 	if r.Date != "" {
 		s = fmt.Sprintf("%s%d DATE %s", indent(r.Level+1), r.Level+1, r.Date)
 		ss = append(ss, s)
@@ -651,11 +660,9 @@ func (r *DataRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			sas := LongString(r.Level+1, "", "TEXT", text)
-			ss = append(ss, sas...)
-		}
+	if r.Text != "" {
+		sas := LongString(r.Level+1, "", "TEXT", r.Text)
+		ss = append(ss, sas...)
 	}
 
 	return strings.Join(ss, "\n")
@@ -718,11 +725,9 @@ func (r *DateRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			sas := LongString(r.Level+1, "", "TEXT", text)
-			ss = append(ss, sas...)
-		}
+	if r.Text != "" {
+		sas := LongString(r.Level+1, "", "TEXT", r.Text)
+		ss = append(ss, sas...)
 	}
 
 	return strings.Join(ss, "\n")
@@ -883,10 +888,8 @@ func (r *EventRecord) String() string {
 	}
 
 	if r.Phone != nil {
-		for _, phone := range r.Phone {
-			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
-			ss = append(ss, s)
-		}
+		s = r.Phone.String()
+		ss = append(ss, s)
 	}
 
 	if r.Parents != nil {
@@ -1168,8 +1171,8 @@ func (r *FootnoteRecord) String() string {
 	s = fmt.Sprintf("%s%d FOOT %s", indent(r.Level), r.Level, r.Value)
 	ss = append(ss, s)
 
-	for _, comp := range r.Component {
-		sas := LongString(r.Level+1, "", "COMP", comp)
+	if r.Component != "" {
+		sas := LongString(r.Level+1, "", "COMP", r.Component)
 		ss = append(ss, sas...)
 	}
 
@@ -1443,11 +1446,6 @@ func (r *IndividualRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.CONL != "" {
-		s = fmt.Sprintf("%s%d CONL %s", indent(r.Level+1), r.Level+1, r.CONL)
-		ss = append(ss, s)
-	}
-
 	if r.Health != "" {
 		s = fmt.Sprintf("%s%d HEAL %s", indent(r.Level+1), r.Level+1, r.Health)
 		ss = append(ss, s)
@@ -1653,10 +1651,8 @@ func (r *IndividualRecord) String() string {
 	}
 
 	if r.Phone != nil {
-		for _, phone := range r.Phone {
-			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
-			ss = append(ss, s)
-		}
+		s = r.Phone.String()
+		ss = append(ss, s)
 	}
 
 	if r.Email != "" {
@@ -2120,6 +2116,7 @@ func (r *PhoneRecord) String() string {
 	var ss []string
 	var s string
 
+	// log.Printf("PhoneRecord type(*r): %T\n%#v\n", *r, *r)
 	s = fmt.Sprintf("%s%d PHON %s", indent(r.Level), r.Level, r.Phone)
 	ss = append(ss, s)
 
@@ -2371,10 +2368,8 @@ func (r *RepositoryRecord) String() string {
 	}
 
 	if r.Phone != nil {
-		for _, phone := range r.Phone {
-			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
-			ss = append(ss, s)
-		}
+		s = r.Phone.String()
+		ss = append(ss, s)
 	}
 
 	if r.WebSite != "" {
@@ -2682,11 +2677,9 @@ func (r *SourceRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Text != nil {
-		for _, text := range r.Text {
-			sas := LongString(r.Level+1, "", "TEXT", text)
-			ss = append(ss, sas...)
-		}
+	if r.Text != "" {
+		sas := LongString(r.Level+1, "", "TEXT", r.Text)
+		ss = append(ss, sas...)
 	}
 
 	if r.Data != nil {
@@ -2902,10 +2895,8 @@ func (r *SubmitterRecord) String() string {
 	}
 
 	if r.Phone != nil {
-		for _, phone := range r.Phone {
-			s = fmt.Sprintf("%s%d PHON %s", indent(r.Level+1), r.Level+1, phone)
-			ss = append(ss, s)
-		}
+		s = r.Phone.String()
+		ss = append(ss, s)
 	}
 
 	if r.Email != "" {

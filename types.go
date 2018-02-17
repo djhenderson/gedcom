@@ -105,9 +105,9 @@ type AuthorRecord struct {
 
 // BibliographyRecord represents a bibliography record
 type BibliographyRecord struct {
-	Level     int      // ..BIBL level
-	Value     string   // ..BIBL value
-	Component []string // ..BIBL.COMP
+	Level     int    // ..BIBL level
+	Value     string // ..BIBL value
+	Component string // ..BIBL.COMP
 }
 
 // BlobRecord represents a binary large object record
@@ -167,7 +167,7 @@ type CitationRecord struct {
 	FamilySearchFTID_ string       // ..SOUR._FSFTID (AQ14)
 	Event             EventRecords // ..SOUR.EVEN
 	Data              DataRecords  // ..SOUR.DATA
-	Text              []string     // ..SOUR.TEXT
+	Text              string       // ..SOUR.TEXT
 	Quality           string       // ..SOUR.QUAY
 	Media             MediaLinks   // ..SOUR.OBJE
 	CONS              string       // ..SOUR.CONS
@@ -199,7 +199,7 @@ type DataRecord struct {
 	Data      string       // value of ..DATA
 	Date      string       // ..DATA.DATE
 	Copyright string       // ..DATA.COPR
-	Text      []string     // ..DATA.TEXT
+	Text      string       // ..DATA.TEXT
 	Event     EventRecords // ..DATA.EVEN
 	Agency    string       // ..DATA.AGNC
 	Note      NoteRecords  // ..DATA.NOTE
@@ -210,17 +210,17 @@ type DataRecords []*DataRecord
 
 // DateRecord represents a date
 type DateRecord struct {
-	Level     int      // ..DATE level
-	Tag       string   // ..DATE tag
-	Date      string   // ..DATE value
-	Time      string   // ..DATE.TIME value
-	Text      []string // ..DATE.TEXT
-	Day       string   // ..DATE.DATD
-	Month     string   // ..DATE.DATM
-	Year      string   // ..DATE.DATY
-	Full      string   // ..DATE.DATF
-	Short     string   // ..DATE.DATS
-	TimeZone_ string   // .. DATE._TIMEZONE (MH/FTB8)
+	Level     int    // ..DATE level
+	Tag       string // ..DATE tag
+	Date      string // ..DATE value
+	Time      string // ..DATE.TIME value
+	Text      string // ..DATE.TEXT
+	Day       string // ..DATE.DATD
+	Month     string // ..DATE.DATM
+	Year      string // ..DATE.DATY
+	Full      string // ..DATE.DATF
+	Short     string // ..DATE.DATS
+	TimeZone_ string // .. DATE._TIMEZONE (MH/FTB8)
 }
 
 // EventDefinitionRecord represents a GEDCOM event definition record.
@@ -360,9 +360,9 @@ type FamilyRecords []*FamilyRecord
 
 // FootnoteRecord represents a footnote record
 type FootnoteRecord struct {
-	Level     int      // ..FOOT level
-	Value     string   // ..FOOT value
-	Component []string // ..FOOT.COMP
+	Level     int    // ..FOOT level
+	Value     string // ..FOOT value
+	Component string // ..FOOT.COMP
 }
 
 // GedcomRecord represents a gedcom record
@@ -447,7 +447,6 @@ type IndividualRecord struct {
 	History             HistoryRecords             // INDI.HIST
 	Quality             string                     // INDI.QUAY
 	Living              string                     // INDI.LVG
-	CONL                string                     // INDI.CONL
 	AncestralFileNumber []string                   // INDI.AFN
 	RecordFileNumber    string                     // INDI.RFN
 	UserReferenceNumber UserReferenceNumberRecords // INDI.REFN
@@ -597,7 +596,7 @@ type PhoneRecords []*PhoneRecord
 
 // PhotoRecord represents a GEDCOM photo record.
 type PhotoRecord struct { // (MH/FTB8)
-	Level int    // ..PHON level
+	Level int    // .._PHOTO level
 	Uid_  string // .._PHOTO._UID (MH/FTB8)
 	Prin_ string // .._PHOTO._PRIN (MH/FTB8)
 }
@@ -756,7 +755,7 @@ type SourceRecord struct {
 	Publication         string                     // ..SOUR.PUBL
 	MediaType           string                     // ..SOUR.MEDI (Leg8)
 	Parenthesized_      string                     // ..SOUR._PAREN (PAF5)
-	Text                []string                   // ..SOUR.TEXT
+	Text                string                     // ..SOUR.TEXT
 	Data                *DataRecord                // ..SOUR.DATA
 	Footnote            *FootnoteRecord            // ..SOUR.FOOT
 	Bibliography        *BibliographyRecord        // ..SOUR.BIBL

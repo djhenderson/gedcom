@@ -731,8 +731,8 @@ func makeBibliographyParser(d *Decoder, r *BibliographyRecord, minLevel int) par
 		switch tag {
 
 		case "COMP":
-			r.Component = append(r.Component, value)
-			d.pushParser(makeTextParser(d, &r.Component[len(r.Component)-1], level))
+			r.Component = r.Component + value
+			d.pushParser(makeTextParser(d, &r.Component, level))
 
 		default:
 			log.Printf("unhandled bibliography record tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
@@ -954,8 +954,8 @@ func makeCitationParser(d *Decoder, r *CitationRecord, minLevel int) parser {
 			d.pushParser(makeDataParser(d, rec, level))
 
 		case "TEXT":
-			r.Text = append(r.Text, value)
-			d.pushParser(makeTextParser(d, &r.Text[len(r.Text)-1], level))
+			r.Text = r.Text + value
+			d.pushParser(makeTextParser(d, &r.Text, level))
 
 		case "DATE": // Leg8
 			r.Date = value
@@ -992,8 +992,8 @@ func makeDataParser(d *Decoder, r *DataRecord, minLevel int) parser {
 			r.Copyright = value
 
 		case "TEXT":
-			r.Text = append(r.Text, value)
-			d.pushParser(makeTextParser(d, &r.Text[len(r.Text)-1], level))
+			r.Text = r.Text + value
+			d.pushParser(makeTextParser(d, &r.Text, level))
 
 		case "EVEN":
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
@@ -1028,8 +1028,8 @@ func makeDateParser(d *Decoder, r *DateRecord, minLevel int) parser {
 			r.Time = value
 
 		case "TEXT":
-			r.Text = append(r.Text, value)
-			d.pushParser(makeTextParser(d, &r.Text[len(r.Text)-1], level))
+			r.Text = r.Text + value
+			d.pushParser(makeTextParser(d, &r.Text, level))
 
 		case "DATD":
 			r.Day = value
@@ -1350,8 +1350,13 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 			r.Child = append(r.Child, rec)
 			d.pushParser(makeIndividualLinkParser(d, rec, level))
 
-		case "ANUL", "CENS", "DIV", "DIVF", "ENGA", "EVEN", "MARR", "MARB",
-			"MARC", "MARL", "MARS", "RESI", "SLGC", "SLGS":
+		case "ANUL", "CENS", "DIV", "DIVF", // FAM 5.5.1
+			"ENGA", "MARB", "MARC", // FAM 5.5.1
+			"MARR",         // FAM 5.5.1
+			"MARL", "MARS", // FAM 5.5.1
+			"RESI", // FAM 5.5.1
+			"EVEN", // FAM 5.5.1
+			"SLGS": // LDS FAM 5.5.1
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
@@ -1420,8 +1425,8 @@ func makeFootnoteParser(d *Decoder, r *FootnoteRecord, minLevel int) parser {
 		switch tag {
 
 		case "COMP":
-			r.Component = append(r.Component, value)
-			d.pushParser(makeTextParser(d, &r.Component[len(r.Component)-1], level))
+			r.Component = r.Component + value
+			d.pushParser(makeTextParser(d, &r.Component, level))
 
 		default:
 			log.Printf("unhandled Footnote tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
@@ -1650,18 +1655,25 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 		case "SEX":
 			r.Sex = value
 
-		case "CAST", "DSCR", "IDNO":
+		case "ATTR", "CAST", "DSCR", "EDUC", "IDNO", // 5.5.1
+			"NATI", "NCHI", "NMR", "OCCU", "PROP", "RELI", // 5.5.1
+			"RESI", "SSN", "TITL", "FACT": // 5.5.1
 			rec := &AttributeRecord{Level: level, Tag: tag, Value: value}
 			r.Attribute = append(r.Attribute, rec)
 			d.pushParser(makeAttributeParser(d, rec, level))
 
-		case "ATTR", "ADOP", "BAPL", "BAPM", "BARM", "BASM", "BIRT", "BLES", "BURI",
-			"CENS", "CHR", "CHRA", "CONF", "CREM", "DEAT", "EDUC",
-			"ELEC", "EMIG", "ENDL", "ENGA", "EVEN", "FACT", "FCOM",
-			"GRAD", "ILLN", "IMMI", "IMMIG", "MARR", "MILI",
-			"MILI_AWA", "MILI_RET", "NATI", "NATU", "NCHI", "NMR", "OCCU",
-			"ORDN", "PROB", "PROP", "RELI", "RESD", "RESI", "RETI", "SLGC",
-			"SSN", "TITL", "TRAV", "WAR", "WILL":
+		case "BIRT", "CHR", "DEAT", "BURI", "CREM", // INDI 5.5.1
+			"ADOP",                         // INDI 5.5.1
+			"BAPM", "BARM", "BASM", "BLES", // INDI 5.5.1
+			"CHRA", "CONF", "FCOM", "ORDN", // INDI 5.5.1
+			"NATU", "EMIG", "IMMI", // INDI 5.5.1
+			"CENS", "PROB", "WILL", // INDI 5.5.1
+			"GRAD", "RETI", // INDI 5.5.1
+			"EVEN",                         // INDI 5.5.1
+			"BAPL", "CONL", "ENDL", "SLGC", // LDS INDI 5.5.1
+			"ELEC", "ILLN", "IMMIG", "MILI",
+			"MILI_AWA", "MILI_RET", "RESD",
+			"TRAV", "WAR":
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
@@ -1697,9 +1709,6 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 
 		case "LVG":
 			r.Living = value
-
-		case "CONL":
-			r.CONL = value
 
 		case "AFN":
 			r.AncestralFileNumber = append(r.AncestralFileNumber, value)
@@ -2590,11 +2599,11 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 
 		case "ABBR":
 			r.Abbreviation = value
-			d.pushParser(makeTextParser(d, &r.Title, level))
+			d.pushParser(makeTextParser(d, &r.Abbreviation, level))
 
 		case "PUBL":
 			r.Publication = value
-			d.pushParser(makeTextParser(d, &r.Title, level))
+			d.pushParser(makeTextParser(d, &r.Publication, level))
 
 		case "MEDI":
 			r.MediaType = value
@@ -2618,8 +2627,8 @@ func makeSourceParser(d *Decoder, r *SourceRecord, minLevel int) parser {
 			r.Italic_ = value
 
 		case "TEXT":
-			r.Text = append(r.Text, value)
-			d.pushParser(makeTextParser(d, &r.Text[len(r.Text)-1], level))
+			r.Text = r.Text + value
+			d.pushParser(makeTextParser(d, &r.Text, level))
 
 		case "DATA":
 			rec := &DataRecord{Level: level, Data: value}
