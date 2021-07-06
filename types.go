@@ -32,6 +32,7 @@ type AlbumRecord struct { // MH/FTB8
 	Xref   string       // xref_id of level 0 ..ALBUM
 	Rin    []string     // ALBUM.RIN
 	Title  string       // ALBUM.TITL
+	Desc_  string       // ALBUM._DESC (MH-FTB8)
 	Photo_ PhotoRecords // ALBUM._PHOTO
 }
 
@@ -52,6 +53,7 @@ type AttributeRecord struct {
 	Primary_        string          // ..EVEN._PRIM
 	Date            *DateRecord     // ..EVEN.DATE
 	Date2_          *DateRecord     // ..EVEN._DATE2 (AQ14)
+	Age string // ..EVEN.AGE (MH-FTB8)
 	Place           *PlaceRecord    // ..EVEN.PLAC
 	Place2_         *PlaceRecord    // ..EVEN._PLAC2 (AQ14)
 	Description2_   string          // ..EVEN._Description2 (AQ14)

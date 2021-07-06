@@ -147,6 +147,11 @@ func (r *AlbumRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.Desc_ != "" {
+		s = fmt.Sprintf("%s%d _DESC %s", indent(r.Level+1), r.Level+1, r.Desc_)
+		ss = append(ss, s)
+	}
+
 	if r.Photo_ != nil {
 		s = r.Photo_.String()
 		ss = append(ss, s)
@@ -220,6 +225,11 @@ func (r *AttributeRecord) String() string {
 
 	if r.Date != nil {
 		s = r.Date.String()
+		ss = append(ss, s)
+	}
+
+	if r.Age != "" {  // MH-FTB8
+		s = fmt.Sprintf("%s%d AGE %s", indent(r.Level+1), r.Level+1, r.Age)
 		ss = append(ss, s)
 	}
 

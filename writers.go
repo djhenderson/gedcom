@@ -204,6 +204,11 @@ func (r *AlbumRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
+	if r.Desc_ != "" {
+		n, err = WriteLineNp1(w, r.Level, "_DESC", r.Desc_)
+		nbytes += n
+	}
+
 	if r.Photo_ != nil {
 		nbytes += n
 		n, err = r.Photo_.Write(w)
@@ -288,6 +293,11 @@ func (r *AttributeRecord) Write(w io.Writer) (nbytes int, err error) {
 
 	if r.Date2_ != nil { // AQ14
 		n, err = r.Date2_.Write(w)
+		nbytes += n
+	}
+
+	if r.Age != "" { // MH-FTB8
+		n, err = WriteLineNp1(w, r.Level, "AGE", r.Age)
 		nbytes += n
 	}
 

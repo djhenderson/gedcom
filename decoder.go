@@ -526,6 +526,9 @@ func makeAlbumParser(d *Decoder, r *AlbumRecord, minLevel int) parser {
 		case "TITL":
 			r.Title = value
 
+		case "_DESC": // MH-FTB8
+			r.Desc_ = value
+
 		case "_PHOTO":
 			rec := &PhotoRecord{Level: level}
 			r.Photo_ = append(r.Photo_, rec)
@@ -572,6 +575,9 @@ func makeAttributeParser(d *Decoder, r *AttributeRecord, minLevel int) parser {
 			rec := &DateRecord{Level: level, Tag: tag, Date: value}
 			r.Date = rec
 			d.pushParser(makeDateParser(d, rec, level))
+
+		case "AGE":
+			r.Age = value
 
 			//		case "_DATE2": // AQ14
 			//			rec := &DateRecord{Level: level, Tag: tag, Date: value}
@@ -1660,7 +1666,8 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 
 		case "ATTR", "CAST", "DSCR", "EDUC", "IDNO", // 5.5.1
 			"NATI", "NCHI", "NMR", "OCCU", "PROP", "RELI", // 5.5.1
-			"SSN", "TITL", "FACT": // 5.5.1
+			"SSN", "TITL", "FACT", // 5.5.1
+			"Language": // MH-FTB8
 			rec := &AttributeRecord{Level: level, Tag: tag, Value: value}
 			r.Attribute = append(r.Attribute, rec)
 			d.pushParser(makeAttributeParser(d, rec, level))
@@ -1676,7 +1683,9 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			"BAPL", "CONL", "ENDL", "SLGC", // LDS INDI 5.5.1
 			"ELEC", "ILLN", "IMMIG", "MILI",
 			"MILI_AWA", "MILI_RET", "RESD", "RESI",
-			"TRAV", "WAR":
+			"TRAV", "WAR",
+			"MARR", // MH/FTB8
+			"Anecdote", "Deed", "Arrival", "Departure", "Marriage": // Custom - MH/FTB8
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
 			d.pushParser(makeEventParser(d, rec, level))
@@ -1832,9 +1841,6 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 
 		case "_TODO": // AQ15
 			r.Todo_ = append(r.Todo_, value)
-
-		case "Anecdote": // (Custom - MH/FTB8)
-			r.Anecdote = append(r.Anecdote, value)
 
 		default:
 			log.Printf("unhandled Individual tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
