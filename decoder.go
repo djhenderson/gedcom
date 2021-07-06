@@ -1346,7 +1346,7 @@ func makeFamilyParser(d *Decoder, r *FamilyRecord, minLevel int) parser {
 		case "NCHI":
 			pint, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
-				log.Printf("NCHI = %s: %s", value, err.Error())
+				log.Printf("NCHI = '%s': %s", value, err.Error())
 			}
 			r.NumChildren = int(pint)
 
