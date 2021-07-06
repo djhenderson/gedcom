@@ -1659,6 +1659,13 @@ func (r *IndividualRecord) Write(w io.Writer) (nbytes int, err error) {
 		}
 	}
 
+	if r.Anecdote != nil { // (Custom - MH/FTB8)
+		for _, anecdote := range r.Anecdote {
+			n, err = WriteLineNp1(w, r.Level, "Anecdote", anecdote)
+			nbytes += n
+		}
+	}
+
 	if r.Media != nil {
 		n, err = r.Media.Write(w)
 		nbytes += n

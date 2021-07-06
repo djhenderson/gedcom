@@ -474,6 +474,7 @@ type IndividualRecord struct {
 	PPExclude_          string                     // INDI._PPEXCLUDE (Leg8)
 	Change              *ChangeRecord              // INDI.CHAN
 	Todo_               []string                   // INDI._TODO (AQ15)
+	Anecdote            []string                   // INDI.Anecdote (Custom - MH/FTB8)
 }
 
 // IndividualRecords represents a slice of individual records

@@ -1645,6 +1645,13 @@ func (r *IndividualRecord) String() string {
 		}
 	}
 
+	if r.Anecdote != nil { // (Custom - MH/FTB8)
+		for _, anecdote := range r.Anecdote {
+			s = fmt.Sprintf("%s%d Anecdote %s", indent(r.Level+1), r.Level+1, anecdote)
+			ss = append(ss, s)
+		}
+	}
+
 	if r.Media != nil { // OBJE
 		s = r.Media.String()
 		ss = append(ss, s)

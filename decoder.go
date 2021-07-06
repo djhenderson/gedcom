@@ -1833,6 +1833,9 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 		case "_TODO": // AQ15
 			r.Todo_ = append(r.Todo_, value)
 
+		case "Anecdote": // (Custom - MH/FTB8)
+			r.Anecdote = append(r.Anecdote, value)
+
 		default:
 			log.Printf("unhandled Individual tag at %d: %d %s %s\n", d.LineNum, level, tag, value)
 		}
