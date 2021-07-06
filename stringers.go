@@ -1250,6 +1250,11 @@ func (r *HeaderRecord) String() string {
 		ss = append(ss, s)
 	}
 
+	if r.SmMerges_ != "" { // MH/FTB8
+		s = fmt.Sprintf("%s%d _SM_MERGES %s", indent(r.Level+1), r.Level+1, r.SmMerges_)
+		ss = append(ss, s)
+	}
+
 	if r.DescriptionAware_ != "" { // MH/FTB8
 		s = fmt.Sprintf("%s%d _DESCRIPTION_AWARE %s", indent(r.Level+1), r.Level+1, r.DescriptionAware_)
 		ss = append(ss, s)
@@ -1851,8 +1856,13 @@ func (r *MediaRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Primary_ != "" { // AQ14
+	if r.Primary_ != "" { // AQ14 (MH/FTB8)
 		s = fmt.Sprintf("%s%d _PRIM %s", indent(r.Level+1), r.Level+1, r.Primary_)
+		ss = append(ss, s)
+	}
+
+	if r.Scan_ != "" { // AQ14 (MH/FTB8)
+		s = fmt.Sprintf("%s%d _SCAN %s", indent(r.Level+1), r.Level+1, r.Scan_)
 		ss = append(ss, s)
 	}
 

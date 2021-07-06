@@ -1509,6 +1509,9 @@ func makeHeaderParser(d *Decoder, r *HeaderRecord, minLevel int) parser {
 		case "_EXPORTED_FROM_SITE_ID": // MH/FTB8
 			r.ExportedFromSiteId_ = value
 
+		case "_SM_MERGES": // MH/FTB8
+			r.SmMerges_ = value
+
 		case "_DESCRIPTION_AWARE": // MH/FTB8
 			r.DescriptionAware_ = value
 
@@ -1888,10 +1891,10 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 			r.Note = append(r.Note, rec)
 			d.pushParser(makeNoteParser(d, rec, level))
 
-		case "_DATE":
+		case "_DATE": // (MH/FTB8)
 			r.Date_ = value
 
-		case "_PLAC":
+		case "_PLACE": // (MH/FTB8)
 			r.Place_ = value
 
 		case "_ASTID":
@@ -1936,8 +1939,11 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 		case "_SCBK": // AQ14
 			r.Scbk_ = value
 
-		case "_PRIM": // AQ14
+		case "_PRIM": // AQ14(MH/FTB8)
 			r.Primary_ = value
+
+		case "_SCAN": // AQ14(MH/FTB8)
+			r.Scan_ = value
 
 		case "_TYPE": // AQ14
 			r.Type_ = value

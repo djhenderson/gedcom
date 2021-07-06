@@ -386,6 +386,7 @@ type HeaderRecord struct {
 	Uid_                string              // HEAD._UID (MH/FTB8)
 	ProjectGuid_        string              // HEAD._PROJECT_GUID (MH/FTB8)
 	ExportedFromSiteId_ string              // HEAD._EXPORTED_FROM_SITE_ID (MH/FTB8)
+	SmMerges_           string              // HEAD._SM_MERGES (MH/FTB8)
 	DescriptionAware_   string              // HEAD._DESCRIPTION_AWARE (MH/FTB8)
 	Gedcom              *GedcomRecord       // HEAD.GEDC
 	CharacterSet        *CharacterSetRecord // HEAD.CHAR
@@ -504,7 +505,7 @@ type MediaRecord struct {
 	Text                string                     // OBJE.TEXT
 	Note                NoteRecords                // OBJE.NOTE
 	Date_               string                     // OBJE._DATE (MH/FTB8)
-	Place_              string                     // OBJE._PLAC (MH/FTB8)
+	Place_              string                     // OBJE._PLACE (MH/FTB8)
 	AstId_              string                     // OBJE._ASTID - FmP identifier
 	AstType_            string                     // OBJE._ASTTYP - FmP type
 	AstDesc_            string                     // OBJE._ASTDESC - FmP description
@@ -516,7 +517,8 @@ type MediaRecord struct {
 	RecordInternal      string                     // OBJE.RecordInternal
 	Change              *ChangeRecord              // OBJE.CHAN
 	Scbk_               string                     // OBJE._SCBK (AQ14)
-	Primary_            string                     // OBJE._PRIM (AQ14)
+	Primary_            string                     // OBJE._PRIM (AQ14)(MH/FTB8)
+	Scan_               string                     // OBJE._SCAN (AQ14)(MH/FTB8)
 	Type_               string                     // OBJE._TYPE (AQ14)
 	Sshow_              *SlideShowRecord           // OBJE._SSHOW (AQ14)
 	PrimCutout_         string                     // OBJE._PRIM_CUTOUT (MH/FTB8)

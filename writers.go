@@ -1263,6 +1263,11 @@ func (r *HeaderRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
+	if r.SmMerges_ != "" { // MH/FTB8
+		n, err = WriteLineNp1(w, r.Level, "_SM_MERGES", r.SmMerges_)
+		nbytes += n
+	}
+
 	if r.DescriptionAware_ != "" { // MH/FTB8
 		n, err = WriteLineNp1(w, r.Level, "_DESCRIPTION_AWARE", r.DescriptionAware_)
 		nbytes += n
@@ -1837,8 +1842,13 @@ func (r *MediaRecord) Write(w io.Writer) (nbytes int, err error) {
 		nbytes += n
 	}
 
-	if r.Primary_ != "" { // AQ14
+	if r.Primary_ != "" { // AQ14 (MH/FTB8)
 		n, err = WriteLineNp1(w, r.Level, "_PRIM", r.Primary_)
+		nbytes += n
+	}
+
+	if r.Scan_ != "" { // AQ14 (MH/FTB8)
+		n, err = WriteLineNp1(w, r.Level, "_SCAN", r.Scan_)
 		nbytes += n
 	}
 
