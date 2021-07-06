@@ -30,7 +30,7 @@ func NewDecoder(r io.Reader) *Decoder {
 // Count warnings
 func (d *Decoder) CountWarnings() {
 	d.warningCount += 1
-	if d.warningCount >= 100 {
+	if d.warningCount >= 10 {
 		panic("too many warnings.")
 	}
 }
@@ -1657,7 +1657,7 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 
 		case "ATTR", "CAST", "DSCR", "EDUC", "IDNO", // 5.5.1
 			"NATI", "NCHI", "NMR", "OCCU", "PROP", "RELI", // 5.5.1
-			"RESI", "SSN", "TITL", "FACT": // 5.5.1
+			"SSN", "TITL", "FACT": // 5.5.1
 			rec := &AttributeRecord{Level: level, Tag: tag, Value: value}
 			r.Attribute = append(r.Attribute, rec)
 			d.pushParser(makeAttributeParser(d, rec, level))
@@ -1672,7 +1672,7 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			"EVEN",                         // INDI 5.5.1
 			"BAPL", "CONL", "ENDL", "SLGC", // LDS INDI 5.5.1
 			"ELEC", "ILLN", "IMMIG", "MILI",
-			"MILI_AWA", "MILI_RET", "RESD",
+			"MILI_AWA", "MILI_RET", "RESD", "RESI",
 			"TRAV", "WAR":
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)
@@ -1890,6 +1890,9 @@ func makeMediaParser(d *Decoder, r *MediaRecord, minLevel int) parser {
 
 		case "_DATE":
 			r.Date_ = value
+
+		case "_PLAC":
+			r.Place_ = value
 
 		case "_ASTID":
 			r.AstId_ = value

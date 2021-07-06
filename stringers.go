@@ -132,7 +132,7 @@ func (r *AlbumRecord) String() string {
 	if r.Xref != "" {
 		id = fmt.Sprintf("%s ", r.Xref)
 	}
-	s = fmt.Sprintf("%s%d %s", indent(r.Level), r.Level, id, "ALBUM")
+	s = fmt.Sprintf("%s%d %s %s", indent(r.Level), r.Level, id, "ALBUM")
 	ss = append(ss, s)
 
 	if r.Rin != nil { // MH/FTB8

@@ -26,7 +26,7 @@ type AddressRecord struct {
 // AddressRecords represents a slice of address records
 type AddressRecords []*AddressRecord
 
-// AlbumRecord represents a GEDCOM album record (MN/FTB8)
+// AlbumRecord represents a GEDCOM album record (MH/FTB8)
 type AlbumRecord struct { // MH/FTB8
 	Level  int          // ..ALBUM level
 	Xref   string       // xref_id of level 0 ..ALBUM
@@ -35,7 +35,7 @@ type AlbumRecord struct { // MH/FTB8
 	Photo_ PhotoRecords // ALBUM._PHOTO
 }
 
-// AlbumRecords represents a slice of album records (MN/FTB8)
+// AlbumRecords represents a slice of album records (MH/FTB8)
 type AlbumRecords []*AlbumRecord
 
 // AttributeRecord represents a GEDCOM attribute record
@@ -503,7 +503,8 @@ type MediaRecord struct {
 	Author              string                     // OBJE.AUTH
 	Text                string                     // OBJE.TEXT
 	Note                NoteRecords                // OBJE.NOTE
-	Date_               string                     // OBJE._DATE
+	Date_               string                     // OBJE._DATE (MH/FTB8)
+	Place_              string                     // OBJE._PLAC (MH/FTB8)
 	AstId_              string                     // OBJE._ASTID - FmP identifier
 	AstType_            string                     // OBJE._ASTTYP - FmP type
 	AstDesc_            string                     // OBJE._ASTDESC - FmP description
@@ -518,13 +519,13 @@ type MediaRecord struct {
 	Primary_            string                     // OBJE._PRIM (AQ14)
 	Type_               string                     // OBJE._TYPE (AQ14)
 	Sshow_              *SlideShowRecord           // OBJE._SSHOW (AQ14)
-	PrimCutout_         string                     // OBJE._PRIM_CUTOUT (MN/FTB8)
-	Cutout_             string                     // OBJE._CUTOUT (MN/FTB8)
-	Position_           string                     // OBJE._POSITION (MN/FTB8)
-	Album_              string                     // OBJE._ALBUM (MN/FTB8)
-	PhotoRin_           string                     // OBJE._PHOTO_RIN (MN/FTB8)
-	Filesize_           string                     // OBJE._FILESIZE (MN/FTB8)
-	ParentRin_          string                     // OBJE._PARENTRIN (MN/FTB8)
+	PrimCutout_         string                     // OBJE._PRIM_CUTOUT (MH/FTB8)
+	Cutout_             string                     // OBJE._CUTOUT (MH/FTB8)
+	Position_           string                     // OBJE._POSITION (MH/FTB8)
+	Album_              string                     // OBJE._ALBUM (MH/FTB8)
+	PhotoRin_           string                     // OBJE._PHOTO_RIN (MH/FTB8)
+	Filesize_           string                     // OBJE._FILESIZE (MH/FTB8)
+	ParentRin_          string                     // OBJE._PARENTRIN (MN/F)
 	SrcPp_              string                     // OBJE._SRCPP (AQ15)
 	SrcFlip_            string                     // OBJE._SRCFLIP (AQ15)
 	FsFtId_             string                     // OBJE._FSFTID (AQ15)
