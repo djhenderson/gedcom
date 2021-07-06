@@ -228,7 +228,7 @@ func (r *AttributeRecord) String() string {
 		ss = append(ss, s)
 	}
 
-	if r.Age != "" {  // MH-FTB8
+	if r.Age != "" { // MH-FTB8
 		s = fmt.Sprintf("%s%d AGE %s", indent(r.Level+1), r.Level+1, r.Age)
 		ss = append(ss, s)
 	}

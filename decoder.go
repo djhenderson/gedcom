@@ -1684,7 +1684,7 @@ func makeIndividualParser(d *Decoder, r *IndividualRecord, minLevel int) parser 
 			"ELEC", "ILLN", "IMMIG", "MILI",
 			"MILI_AWA", "MILI_RET", "RESD", "RESI",
 			"TRAV", "WAR",
-			"MARR", // MH/FTB8
+			"MARR",                                                 // MH/FTB8
 			"Anecdote", "Deed", "Arrival", "Departure", "Marriage": // Custom - MH/FTB8
 			rec := &EventRecord{Level: level, Tag: tag, Value: value}
 			r.Event = append(r.Event, rec)

@@ -53,7 +53,7 @@ type AttributeRecord struct {
 	Primary_        string          // ..EVEN._PRIM
 	Date            *DateRecord     // ..EVEN.DATE
 	Date2_          *DateRecord     // ..EVEN._DATE2 (AQ14)
-	Age string // ..EVEN.AGE (MH-FTB8)
+	Age             string          // ..EVEN.AGE (MH-FTB8)
 	Place           *PlaceRecord    // ..EVEN.PLAC
 	Place2_         *PlaceRecord    // ..EVEN._PLAC2 (AQ14)
 	Description2_   string          // ..EVEN._Description2 (AQ14)
